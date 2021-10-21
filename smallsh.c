@@ -36,9 +36,9 @@ int display_prompt(void)
 }
 
 /* function get_user_input 
-retrieves input from stdin, strips out any newline characters, and returns a pointer to this input. 
+retrieves input from stdin and returns a pointer to this input. 
 
-returns: pointer to cleansed user input. return value will be NULL if user input is empty or newline only. 
+returns: pointer to user input. return value will be NULL if user input is empty (e.g. CTRL-D to send EOF). 
 */
 char* get_user_input(void)
 {
@@ -61,7 +61,40 @@ char* get_user_input(void)
         return NULL;
     };
 
+    if (DEBUG) {
+        printf("(get_user_input) received command: %s", buffer);
+    }
+
     return buffer;
+}
+
+/* function strips newlines
+strips newlines from an input string and returns a version with no newlines.
+char* string: contains input string presumably with newlines. 
+returns: pointer to a new string, with newlines removed. 
+*/
+char* strip_newlines(char* source)
+{
+
+    char* token = NULL;
+    char* save_ptr = NULL;
+
+    char* string = malloc(sizeof(char) * strlen(source) + 1);
+    char* output = malloc(sizeof(char) * strlen(source) + 1);
+    strcpy(string, source);
+
+    if ((token = strtok_r(string, "\n", &save_ptr)) != NULL) {
+        strcat(output, token);
+        while ((token = strtok_r(NULL, "\n", &save_ptr)) != NULL) {
+            strcat(output, token);
+        }
+    }
+
+    printf("source: %s\n", source);
+    printf("string: %s\n", string);
+    printf("output: %s\n", output);
+
+    return output;
 }
 
 int main(void)
@@ -73,7 +106,7 @@ int main(void)
         display_prompt();
 
         if ((user_input = get_user_input()) != NULL) {
-            printf("%s", user_input);
+            strip_newlines(user_input);
         };
 
         free(user_input);
