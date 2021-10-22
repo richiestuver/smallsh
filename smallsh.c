@@ -151,12 +151,46 @@ char* strip_comments(char* source)
 receives an input character array and then delegates to a series of specific parsers to populate a 
 command struct representing the command and arguments to be executed by the shell.
 
-input: character array representing target command specified by user
+input: character array representing target command specified by user. must NOT be NULL
 returns: pointer to a populated command struct
 */
 struct command* parse_input(char* input)
 {
     char* token = NULL;
+    char* save_ptr = NULL;
+
+    char* tokenize = malloc(sizeof(char) * (strlen(input) + 1));
+    strcpy(tokenize, input);
+
+    printf("(parse_input) parsing: %s\n", tokenize);
+
+    token = strtok_r(tokenize, " ", &save_ptr);
+
+    do {
+
+        printf("(parse_input) found token: %s\n", token);
+
+        switch (token[0]) {
+
+        case '<':
+            printf("(parse_input) stdin redirect: <\n");
+            break;
+
+        case '>':
+            printf("(parse_input) stdout redirect: >\n");
+            break;
+
+        case '&':
+            printf("(parse_input) background operator: &\n");
+            break;
+
+        default:
+            break;
+        }
+
+    } while ((token = strtok_r(NULL, " ", &save_ptr)) != NULL);
+
+    return;
 }
 
 int main(void)
@@ -178,7 +212,8 @@ int main(void)
             continue;
         };
 
-        printf("executing %s\n", user_input);
+        parse_input(user_input);
+        printf("(main) executing %s\n", user_input);
     }
     return 0;
 }
