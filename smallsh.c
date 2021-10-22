@@ -128,9 +128,9 @@ char* strip_comments(char* source)
         return NULL;
     }
 
-    char* tokenize = malloc(sizeof(char) * (strlen(source) + 1));
-    strcpy(tokenize, source);
-    char* comment_loc = strstr(tokenize, "#");
+    char* output = malloc(sizeof(char) * (strlen(source) + 1));
+    strcpy(output, source);
+    char* comment_loc = strstr(output, "#");
 
     if (comment_loc != NULL) {
         printf("(strip_comments) comment: %s\n", comment_loc);
@@ -138,13 +138,13 @@ char* strip_comments(char* source)
     }
 
     printf("(strip_comments) source: %s\n", source);
-    printf("(strip_comments) tokenize: %s\n", tokenize);
+    printf("(strip_comments) output: %s\n", output);
 
-    if (strlen(tokenize) == 0) {
+    if (strlen(output) == 0) {
         return NULL;
     }
 
-    return tokenize;
+    return output;
 }
 
 /* function parse_input
