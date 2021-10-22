@@ -147,26 +147,88 @@ char* strip_comments(char* source)
     return output;
 }
 
-/* function parse_input
+/* function init_empty_command
+initializes a new command struct by allocating memory for the struct itself as 
+well as the argv array. other non-pointer members are initialized.
+
+returns: pointer to an empty command struct with memory allocated.
+ */
+struct command* init_empty_command()
+{
+
+    struct command* command;
+    command = malloc(sizeof(struct command));
+    if (command == NULL) {
+        printf("(init_empty_command) error allocating memory for command...");
+        return NULL;
+    }
+
+    command->argv = calloc(512, sizeof(char*));
+    if (command->argv == NULL) {
+        printf("(init_empty_command) error allocating memory for command->argv...");
+        return NULL;
+    }
+
+    command->argc = 0;
+
+    return command;
+}
+
+/* function parse_command 
+parses an input character array and saves the first space-delimited token 
+to the given command struct as the first argument to argv.
+
+source: input character array from which to retrieve command
+save_ptr: pointer to pointer to modifed source after tokenization
+command: pointer to command struct in which to save in argv
+returns: save_ptr (modified) - pointer to pointer to remaining content of input array (to be parsed)
+*/
+
+char** parse_command(char* source, char** save_ptr, struct command* command)
+{
+    char* token = NULL;
+    printf("(parse_command) parsing: %s\n", source);
+
+    token = strtok_r(source, " ", save_ptr);
+
+    // parse commmand
+    printf("(parse_command) found token: %s\n", token);
+    *(command->argv + 0) = token;
+    printf("(parse_command) command is: %s\n", *(command->argv + 0));
+    return save_ptr;
+}
+
+/* function parse
 receives an input character array and then delegates to a series of specific parsers to populate a 
 command struct representing the command and arguments to be executed by the shell.
 
 input: character array representing target command specified by user. must NOT be NULL
 returns: pointer to a populated command struct
 */
-struct command* parse_input(char* input)
+struct command* parse(char* input)
 {
+
+    struct command* command = init_empty_command();
+
+    if (command == NULL) {
+        printf("(parse_input) fatal error - could not initialize command structure. exiting...\n");
+        exit(1);
+    };
+
     char* token = NULL;
     char* save_ptr = NULL;
 
     char* tokenize = malloc(sizeof(char) * (strlen(input) + 1));
     strcpy(tokenize, input);
 
-    printf("(parse_input) parsing: %s\n", tokenize);
+    // parse command
+    parse_command(tokenize, &save_ptr, command);
 
-    token = strtok_r(tokenize, " ", &save_ptr);
+    // parse args
 
-    do {
+    // parse redirects
+
+    while ((token = strtok_r(NULL, " ", &save_ptr)) != NULL) {
 
         printf("(parse_input) found token: %s\n", token);
 
@@ -188,9 +250,9 @@ struct command* parse_input(char* input)
             break;
         }
 
-    } while ((token = strtok_r(NULL, " ", &save_ptr)) != NULL);
-
-    return;
+        // parse background task
+    }
+    return command;
 }
 
 int main(void)
@@ -212,7 +274,7 @@ int main(void)
             continue;
         };
 
-        parse_input(user_input);
+        parse(user_input);
         printf("(main) executing %s\n", user_input);
     }
     return 0;
