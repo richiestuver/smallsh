@@ -14,6 +14,12 @@ Created: 10-20-21
 #define DEBUG true
 #define PROMPT ": "
 
+struct command {
+    char* cmd;
+    int argc;
+    char** argv;
+};
+
 /* function display_prompt 
 prints the prompt string to stdout. return 0 on success or -1 on some failure condition. flushes stdout after each call
 in order to make sure buffer is really written to terminal.
@@ -42,7 +48,6 @@ returns: pointer to user input. return value will be NULL if user input is empty
 */
 char* get_user_input(void)
 {
-    ssize_t num_chars_read;
     char* buffer = NULL;
     size_t n = 0;
 
@@ -62,39 +67,96 @@ char* get_user_input(void)
     };
 
     if (DEBUG) {
-        printf("(get_user_input) received command: %s", buffer);
+        printf("(get_user_input) received command: %s\n", buffer);
     }
 
     return buffer;
 }
 
 /* function strips newlines
-strips newlines from an input string and returns a version with no newlines.
+strips all newlines from input string and returns a version with no newlines.
 char* string: contains input string presumably with newlines. 
-returns: pointer to a new string, with newlines removed. 
+returns: pointer to a new string, with newlines removed. returns NULL if line is now empty 
+after removing a singular newline
 */
 char* strip_newlines(char* source)
 {
 
+    if (source == NULL) {
+        return NULL;
+    }
+
     char* token = NULL;
     char* save_ptr = NULL;
 
-    char* string = malloc(sizeof(char) * strlen(source) + 1);
-    char* output = malloc(sizeof(char) * strlen(source) + 1);
-    strcpy(string, source);
+    char* tokenize = malloc(sizeof(char) * (strlen(source) + 1));
+    char* output = malloc(sizeof(char) * (strlen(source) + 1));
+    strcpy(tokenize, source);
 
-    if ((token = strtok_r(string, "\n", &save_ptr)) != NULL) {
+    if ((token = strtok_r(tokenize, "\n", &save_ptr)) != NULL) {
         strcat(output, token);
         while ((token = strtok_r(NULL, "\n", &save_ptr)) != NULL) {
             strcat(output, token);
         }
     }
 
-    printf("source: %s\n", source);
-    printf("string: %s\n", string);
-    printf("output: %s\n", output);
+    if (DEBUG) {
+        printf("(strip_newlines) source: %s\n", source);
+        printf("(strip_newlines) output: %s\n", output);
+        printf("(strip_newlines) strlen of output: %lu\n", strlen(output));
+    }
+
+    if (strlen(output) == 0) {
+        return NULL;
+    }
 
     return output;
+}
+
+/* function strip_comments 
+parses source character array and strips out all content following a #
+returns only the content of source array found prior to the first encountered #
+
+source: input character array
+returns: pointer to new character array representing the content prior to #
+if stripping a single # leaves an empty character array, will return NULL.
+*/
+char* strip_comments(char* source)
+{
+
+    if (source == NULL) {
+        return NULL;
+    }
+
+    char* tokenize = malloc(sizeof(char) * (strlen(source) + 1));
+    strcpy(tokenize, source);
+    char* comment_loc = strstr(tokenize, "#");
+
+    if (comment_loc != NULL) {
+        printf("(strip_comments) comment: %s\n", comment_loc);
+        *comment_loc = '\0';
+    }
+
+    printf("(strip_comments) source: %s\n", source);
+    printf("(strip_comments) tokenize: %s\n", tokenize);
+
+    if (strlen(tokenize) == 0) {
+        return NULL;
+    }
+
+    return tokenize;
+}
+
+/* function parse_input
+receives an input character array and then delegates to a series of specific parsers to populate a 
+command struct representing the command and arguments to be executed by the shell.
+
+input: character array representing target command specified by user
+returns: pointer to a populated command struct
+*/
+struct command* parse_input(char* input)
+{
+    char* token = NULL;
 }
 
 int main(void)
@@ -105,12 +167,18 @@ int main(void)
     while (true) {
         display_prompt();
 
-        if ((user_input = get_user_input()) != NULL) {
-            strip_newlines(user_input);
+        user_input = get_user_input();
+        user_input = strip_newlines(user_input);
+        user_input = strip_comments(user_input);
+
+        if (user_input == NULL) {
+            if (DEBUG) {
+                printf("(main) user input is NULL...\n");
+            }
+            continue;
         };
 
-        free(user_input);
+        printf("executing %s\n", user_input);
     }
-
     return 0;
 }
