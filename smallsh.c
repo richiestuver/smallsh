@@ -1,6 +1,6 @@
 /*
 
-Title: Assignment 3: smallsh 
+Title: Assignment 3: smallsh
 Author: Richie Stuver
 Course: CS344 - Operating Systems I
 Created: 10-20-21
@@ -14,13 +14,21 @@ Created: 10-20-21
 #define DEBUG true
 #define PROMPT ": "
 
+char* RESERVED_WORDS[] = {
+    "<",
+    ">",
+    "&",
+    "$$",
+    NULL
+};
+
 struct command {
     char* cmd;
     int argc;
     char** argv;
 };
 
-/* function display_prompt 
+/* function display_prompt
 prints the prompt string to stdout. return 0 on success or -1 on some failure condition. flushes stdout after each call
 in order to make sure buffer is really written to terminal.
 
@@ -41,10 +49,10 @@ int display_prompt(void)
     return 0;
 }
 
-/* function get_user_input 
-retrieves input from stdin and returns a pointer to this input. 
+/* function get_user_input
+retrieves input from stdin and returns a pointer to this input.
 
-returns: pointer to user input. return value will be NULL if user input is empty (e.g. CTRL-D to send EOF). 
+returns: pointer to user input. return value will be NULL if user input is empty (e.g. CTRL-D to send EOF).
 */
 char* get_user_input(void)
 {
@@ -75,8 +83,8 @@ char* get_user_input(void)
 
 /* function strips newlines
 strips all newlines from input string and returns a version with no newlines.
-char* string: contains input string presumably with newlines. 
-returns: pointer to a new string, with newlines removed. returns NULL if line is now empty 
+char* string: contains input string presumably with newlines.
+returns: pointer to a new string, with newlines removed. returns NULL if line is now empty
 after removing a singular newline
 */
 char* strip_newlines(char* source)
@@ -113,7 +121,7 @@ char* strip_newlines(char* source)
     return output;
 }
 
-/* function strip_comments 
+/* function strip_comments
 parses source character array and strips out all content following a #
 returns only the content of source array found prior to the first encountered #
 
@@ -148,7 +156,7 @@ char* strip_comments(char* source)
 }
 
 /* function init_empty_command
-initializes a new command struct by allocating memory for the struct itself as 
+initializes a new command struct by allocating memory for the struct itself as
 well as the argv array. other non-pointer members are initialized.
 
 returns: pointer to an empty command struct with memory allocated.
@@ -174,8 +182,8 @@ struct command* init_empty_command()
     return command;
 }
 
-/* function parse_command 
-parses an input character array and saves the first space-delimited token 
+/* function parse_command
+parses an input character array and saves the first space-delimited token
 to the given command struct as the first argument to argv.
 
 source: input character array from which to retrieve command
@@ -187,19 +195,78 @@ returns: save_ptr (modified) - pointer to pointer to remaining content of input 
 char** parse_command(char* source, char** save_ptr, struct command* command)
 {
     char* token = NULL;
-    printf("(parse_command) parsing: %s\n", source);
 
     token = strtok_r(source, " ", save_ptr);
 
     // parse commmand
-    printf("(parse_command) found token: %s\n", token);
+    if (DEBUG) {
+        printf("(parse_command) found token: %s\n", token);
+    }
+
     *(command->argv + 0) = token;
-    printf("(parse_command) command is: %s\n", *(command->argv + 0));
+    command->argc = 1;
+
+    if (DEBUG) {
+        printf("(parse_command) command is: %s\n", *(command->argv + 0));
+    }
+
+    return save_ptr;
+}
+
+/* function check_reserved_words
+determines if a token contains any reserved symbols or words and returns the
+reserved word or symbol found. order of preference is first encountered.
+
+token: pointer to character array representing an extracted token in parser
+returns: character array containing word or symbol
+*/
+char* check_reserved_words(char* token)
+{
+    int i = 0;
+    while (*(RESERVED_WORDS + i) != NULL) {
+
+        int cmp_size = (strlen(token) < strlen(*(RESERVED_WORDS + i))) ? strlen(token) : strlen(*(RESERVED_WORDS + i));
+
+        if (strncmp(token, *(RESERVED_WORDS + i), cmp_size) == 0) {
+
+            if (DEBUG) {
+                printf("(check_reserved_words) found: %s\n", *(RESERVED_WORDS + i));
+            }
+
+            return *(RESERVED_WORDS + i);
+        }
+        i++;
+    }
+
+    return NULL;
+}
+
+/* function parse_args
+receives the address of a pointer to the current location in string being parsed
+returns a new pointer to updated location after all args have been extracted
+and stored in the command struct.
+
+save_ptr: pointer to pointer to string under tokenization
+command: pointer to command struct in which to save in argv
+returns: save_ptr address
+*/
+char** parse_args(char** save_ptr, struct command* command)
+{
+    char* token = NULL;
+
+    while ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
+        printf("(parse_args) found token: %s\n", token);
+
+        if (check_reserved_words(token) != NULL) {
+            break;
+        };
+    }
+
     return save_ptr;
 }
 
 /* function parse
-receives an input character array and then delegates to a series of specific parsers to populate a 
+receives an input character array and then delegates to a series of specific parsers to populate a
 command struct representing the command and arguments to be executed by the shell.
 
 input: character array representing target command specified by user. must NOT be NULL
@@ -215,43 +282,44 @@ struct command* parse(char* input)
         exit(1);
     };
 
-    char* token = NULL;
+    // char* token = NULL;
     char* save_ptr = NULL;
 
     char* tokenize = malloc(sizeof(char) * (strlen(input) + 1));
     strcpy(tokenize, input);
 
-    // parse command
-    parse_command(tokenize, &save_ptr, command);
+    // parse command -- WILL call strtok_r. this should be for the FIRST time
+    save_ptr = *parse_command(tokenize, &save_ptr, command);
 
     // parse args
+    save_ptr = *parse_args(&save_ptr, command);
 
     // parse redirects
 
-    while ((token = strtok_r(NULL, " ", &save_ptr)) != NULL) {
+    // while ((token = strtok_r(NULL, " ", &save_ptr)) != NULL) {
 
-        printf("(parse_input) found token: %s\n", token);
+    //     printf("(parse_input) found token: %s\n", token);
 
-        switch (token[0]) {
+    //     switch (token[0]) {
 
-        case '<':
-            printf("(parse_input) stdin redirect: <\n");
-            break;
+    //     case '<':
+    //         printf("(parse_input) stdin redirect: <\n");
+    //         break;
 
-        case '>':
-            printf("(parse_input) stdout redirect: >\n");
-            break;
+    //     case '>':
+    //         printf("(parse_input) stdout redirect: >\n");
+    //         break;
 
-        case '&':
-            printf("(parse_input) background operator: &\n");
-            break;
+    //     case '&':
+    //         printf("(parse_input) background operator: &\n");
+    //         break;
 
-        default:
-            break;
-        }
+    //     default:
+    //         break;
+    //     }
 
-        // parse background task
-    }
+    //     // parse background task
+    // }
     return command;
 }
 
