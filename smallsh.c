@@ -171,7 +171,7 @@ struct command* init_empty_command()
         return NULL;
     }
 
-    command->argv = calloc(512, sizeof(char*));
+    command->argv = calloc(513, sizeof(char*)); // save +1 space for a NULL termination of array
     if (command->argv == NULL) {
         printf("(init_empty_command) error allocating memory for command->argv...");
         return NULL;
@@ -204,7 +204,7 @@ char** parse_command(char* source, char** save_ptr, struct command* command)
     }
 
     *(command->argv + 0) = token;
-    command->argc = 1;
+    command->argc += 1;
 
     if (DEBUG) {
         printf("(parse_command) command is: %s\n", *(command->argv + 0));
@@ -260,6 +260,15 @@ char** parse_args(char** save_ptr, struct command* command)
         if (check_reserved_words(token) != NULL) {
             break;
         };
+
+        if (command->argc >= 512) {
+            printf("(parse_args) size limit reached. stopping parse args to prevent buffer overflow...");
+            break;
+        }
+
+        *(command->argv + command->argc) = token;
+        *(command->argv + command->argc + 1) = NULL; // delimits argument list
+        command->argc += 1;
     }
 
     return save_ptr;
@@ -278,7 +287,7 @@ struct command* parse(char* input)
     struct command* command = init_empty_command();
 
     if (command == NULL) {
-        printf("(parse_input) fatal error - could not initialize command structure. exiting...\n");
+        printf("(parse) fatal error - could not initialize command structure. exiting...\n");
         exit(1);
     };
 
@@ -293,6 +302,20 @@ struct command* parse(char* input)
 
     // parse args
     save_ptr = *parse_args(&save_ptr, command);
+
+    // current loc in string
+    printf("(parse) remaining to be parsed: %s\n", save_ptr);
+
+    // print command for debug
+    if (DEBUG) {
+        printf("(parse) fully parsed command struct is: \n");
+        printf("        command: %s\n", *(command->argv + 0));
+        int i = 1;
+        while (*(command->argv + i) != NULL) {
+            printf("        arg%d: %s\n", i, *(command->argv + i));
+            i += 1;
+        }
+    }
 
     // parse redirects
 
