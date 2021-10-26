@@ -241,6 +241,21 @@ char* check_reserved_words(char* token)
     return NULL;
 }
 
+char** reattach_token(char** save_ptr, char* token, char delim)
+{
+    printf("token: %s\n", token);
+    printf("*save_ptr: %s\n", *save_ptr);
+
+    char* loc1 = *(save_ptr) - sizeof(char) * 1;
+    char* loc2 = *(save_ptr) + sizeof(char) * strlen(token) - 2;
+    *loc1 = delim;
+    *loc2 = delim;
+    *save_ptr = token;
+    printf("*save_ptr: %s\n", *save_ptr);
+
+    return save_ptr;
+}
+
 /* function parse_args
 receives the address of a pointer to the current location in string being parsed
 returns a new pointer to updated location after all args have been extracted
@@ -258,11 +273,13 @@ char** parse_args(char** save_ptr, struct command* command)
         printf("(parse_args) found token: %s\n", token);
 
         if (check_reserved_words(token) != NULL) {
+            save_ptr = reattach_token(save_ptr, token, ' ');
             break;
         };
 
         if (command->argc >= 512) {
             printf("(parse_args) size limit reached. stopping parse args to prevent buffer overflow...");
+
             break;
         }
 
@@ -304,7 +321,7 @@ struct command* parse(char* input)
     save_ptr = *parse_args(&save_ptr, command);
 
     // current loc in string
-    printf("(parse) remaining to be parsed: %s\n", save_ptr);
+    printf("(parse) remaining to be parsed:%s\n", save_ptr);
 
     // print command for debug
     if (DEBUG) {
