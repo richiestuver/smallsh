@@ -241,17 +241,32 @@ char* check_reserved_words(char* token)
     return NULL;
 }
 
+/* function reattach_token
+"undo" for a strtok call to reattach a token that was carved out of a string.
+does this by replacing the null terminator with the original delimiter char
+and resetting the address held by save_ptr to the address of the token that was
+split off.
+
+save_ptr: pointer to pointer holding current location in string being tokenized
+token: pointer to start of token that was just carved out
+delimiter: char representing the delimiter that was replaced by '\0'
+*/
 char** reattach_token(char** save_ptr, char* token, char delim)
 {
-    printf("token: %s\n", token);
-    printf("*save_ptr: %s\n", *save_ptr);
+    if (DEBUG) {
+        printf("(reattach_token) token: %s\n", token);
+        printf("(reattach_token) previous *save_ptr: %s\n", *save_ptr);
+    }
 
     char* loc1 = *(save_ptr) - sizeof(char) * 1;
-    char* loc2 = *(save_ptr) + sizeof(char) * strlen(token) - 2;
+    // char* loc2 = *(save_ptr) + sizeof(char) * strlen(token) - 2;
     *loc1 = delim;
-    *loc2 = delim;
+    // *loc2 = delim;
     *save_ptr = token;
-    printf("*save_ptr: %s\n", *save_ptr);
+
+    if (DEBUG) {
+        printf("(reattach_token) new *save_ptr: %s\n", *save_ptr);
+    }
 
     return save_ptr;
 }
