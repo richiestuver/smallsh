@@ -363,7 +363,7 @@ returns a new pointer to updated location after all redirects have been parsed
 and stored in command struct. parsing exits if a reserved keyword that is not a
 redirect is encountered.
 
-save_ptr: pointer to pointer to string under tokenization
+save_ptr: pointer to pointer to stream under tokenization
 command: pointer to command struct in which to save in argv
 returns: save_ptr address
 */
@@ -434,7 +434,7 @@ and replaced with process ID of this shell. process ID is reattached to input st
 to be reinterpreted as an argument. parsing exits if a reserved keyword that is not a
 a variable is encountered.
 
-save_ptr: pointer to pointer to string under tokenization
+save_ptr: pointer to pointer to stream under tokenization
 returns: save_ptr address
 */
 
@@ -475,6 +475,39 @@ char** parse_variable_expansion(char** save_ptr)
     return save_ptr;
 }
 
+/* function parse_background_operator
+receives the address of a pointer to current location in string being parsed
+returns a new pointer to updated location after background operator & has been parsed.
+parsing exits and token & is treated as text if not the last token in the stream.
+
+save_ptr: pointer to pointer to stream under tokenization
+returns: save_ptr address
+*/
+char** parse_background_operator(char** save_ptr)
+{
+    char* token = NULL;
+
+    while ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
+
+        if (strcmp(token, "&") != 0) {
+
+            if (DEBUG) {
+                printf("(parse_background_operator) no & found!\n");
+            }
+
+            reattach_token(save_ptr, token, ' ');
+            break;
+        }
+
+        if (strcmp(*save_ptr, "\0") != 0) {
+            printf("(parse_background_operator) syntax error: background operator must be final argument. dropping &\n");
+            break;
+        }
+        printf("(parse_background_operator) detected background operator &\n");
+    }
+    return save_ptr;
+}
+
 /* function parse
 receives an input character array and then delegates to a series of specific parsers to populate a
 command struct representing the command and arguments to be executed by the shell.
@@ -510,7 +543,11 @@ struct command* parse(char* input)
         // parse redirects
         save_ptr = *parse_redirects(&save_ptr, command);
 
+        // parse variable expansion
         save_ptr = *parse_variable_expansion(&save_ptr);
+
+        // parse background operator
+        save_ptr = *parse_background_operator(&save_ptr);
 
         // current loc in string
 
