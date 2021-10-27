@@ -8,4 +8,3 @@ Created: 10-27-21
 */
 
 #define DEBUG true
-#define PROMPT ": "
