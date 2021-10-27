@@ -36,7 +36,21 @@ int main(void)
         };
 
         command = parse(user_input);
-        printf("(main) executing %s\n", user_input);
+
+        if (DEBUG) {
+            printf("(main) fully parsed command struct is: \n");
+            printf("        command (arg0): %s\n", *(command->argv + 0));
+            int i = 1;
+            while (*(command->argv + i) != NULL) {
+                printf("        arg%d: %s\n", i, *(command->argv + i));
+                i += 1;
+            }
+
+            printf("        background: %s\n", (command->background == 1) ? "true" : "false");
+            printf("        stdin: %s\n", (command->f_stdin));
+            printf("        stdout: %s\n", (command->f_stdout));
+            printf("        stderr: %s\n", (command->f_stderr));
+        }
     }
     return 0;
 }
