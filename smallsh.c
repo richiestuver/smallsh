@@ -294,9 +294,7 @@ char** reattach_token(char** save_ptr, char* token, char delim)
     if (DEBUG) {
         printf("(reattach_token) token: %s\n", token);
         printf("(reattach_token) previous *save_ptr: %s\n", *save_ptr);
-        printf("(reattach_token) *save_ptr is empty is %d\n", (strcmp(*save_ptr, "") == 0));
-        printf("(reattach_token) *save_ptr is null0 is %d\n", (strcmp(*save_ptr, "\0") == 0));
-        printf("(reattach_token) *save_ptr is NULL is %d\n", (*save_ptr == NULL));
+        printf("(reattach_token) *save_ptr == empty is %d\n", (strcmp(*save_ptr, "\0") == 0));
     }
 
     // if the char at save_ptr is "" (empty), we will accidentally overwrite
@@ -312,9 +310,7 @@ char** reattach_token(char** save_ptr, char* token, char delim)
     if (DEBUG) {
         printf("(reattach_token) new *save_ptr: %s\n", *save_ptr);
         printf("(reattach_token) token: %s\n", token);
-        printf("(reattach_token) *save_ptr is empty is %d\n", (strcmp(*save_ptr, "") == 0));
-        printf("(reattach_token) *save_ptr is null0 is %d\n", (strcmp(*save_ptr, "\0") == 0));
-        printf("(reattach_token) *save_ptr is NULL is %d\n", (*save_ptr == NULL));
+        printf("(reattach_token) *save_ptr == empty is %d\n", (strcmp(*save_ptr, "\0") == 0));
     }
 
     return save_ptr;
@@ -447,18 +443,26 @@ struct command* parse(char* input)
 
     char* tokenize = malloc(sizeof(char) * (strlen(input) + 1));
     strcpy(tokenize, input);
+    printf("(parse) remaining to be parsed:%s\n", save_ptr);
 
     // parse command -- WILL call strtok_r. this should be for the FIRST time
     save_ptr = *parse_command(tokenize, &save_ptr, command);
 
-    // parse args
-    save_ptr = *parse_args(&save_ptr, command);
+    do {
+        // parse args
+        save_ptr = *parse_args(&save_ptr, command);
 
-    // parse redirects
-    save_ptr = *parse_redirects(&save_ptr, command);
+        // parse redirects
+        save_ptr = *parse_redirects(&save_ptr, command);
 
-    // current loc in string
-    printf("(parse) remaining to be parsed:%s\n", save_ptr);
+        // current loc in string
+
+        if (DEBUG) {
+            printf("(parse) remaining to be parsed:%s\n", save_ptr);
+            printf("(parse) *save_ptr is empty is %d\n", (strcmp(save_ptr, "\0") == 0));
+        }
+
+    } while (strcmp(save_ptr, "\0") != 0);
 
     // print command for debug
     if (DEBUG) {
