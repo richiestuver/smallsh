@@ -11,6 +11,8 @@ Created: 10-20-21
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+
 #define DEBUG true
 #define PROMPT ": "
 
@@ -240,8 +242,6 @@ char* check_from_start(char* source, char** keywords)
     int i = 0;
     while (*(keywords + i) != NULL) {
 
-        // int cmp_size = (strlen(source) < strlen(*(keywords + i))) ? strlen(source) : strlen(*(keywords + i));
-
         if ((strlen(source)) < strlen(*(keywords + i))) {
             break;
         }
@@ -446,19 +446,30 @@ char** parse_variable_expansion(char** save_ptr)
     if ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
         if (strcmp(token, "$$") != 0) {
 
-            printf("(parse_variable_expansion) no $$ found!\n");
+            if (DEBUG) {
+                printf("(parse_variable_expansion) no $$ found!\n");
+            }
+
             reattach_token(save_ptr, token, ' ');
         } else {
-            printf("(parse_variable_expansion) found $$\n");
-            char* pid = "12345";
+
+            if (DEBUG) {
+                printf("(parse_variable_expansion) found $$\n");
+            }
+
+            // assign PID to $$
+            char* pid = malloc(sizeof(char) * 12); // allocate 11 chars for digits of PID
+            snprintf(pid, 12, "%d", getpid());
             new_str = malloc(strlen(*save_ptr) + strlen(pid) + 2);
             strcpy(new_str, pid);
             strcat(new_str, " ");
             strcat(new_str, *save_ptr);
-            // strcpy((new_str + strlen(pid) + 1), *save_ptr); // retain null terminator
-            printf("(parse_variable_expansion) new parse string: %s\n", new_str);
+
+            if (DEBUG) {
+                printf("(parse_variable_expansion) new parse string: %s\n", new_str);
+            }
+
             save_ptr = &new_str;
-            // reattach_token(save_ptr, pid, ' ');
         }
     }
     return save_ptr;
