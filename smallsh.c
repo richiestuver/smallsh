@@ -448,6 +448,7 @@ struct command* parse(char* input)
     // parse command -- WILL call strtok_r. this should be for the FIRST time
     save_ptr = *parse_command(tokenize, &save_ptr, command);
 
+    // TODO: protect against infinite loop, make sure all reserved words are handled.
     do {
         // parse args
         save_ptr = *parse_args(&save_ptr, command);
