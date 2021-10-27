@@ -240,7 +240,13 @@ char* check_from_start(char* source, char** keywords)
     int i = 0;
     while (*(keywords + i) != NULL) {
 
-        int cmp_size = (strlen(source) < strlen(*(keywords + i))) ? strlen(source) : strlen(*(keywords + i));
+        // int cmp_size = (strlen(source) < strlen(*(keywords + i))) ? strlen(source) : strlen(*(keywords + i));
+
+        if ((strlen(source)) < strlen(*(keywords + i))) {
+            break;
+        }
+
+        int cmp_size = strlen(*(keywords + i));
 
         if (strncmp(source, *(keywords + i), cmp_size) == 0) {
 
@@ -421,6 +427,43 @@ char** parse_redirects(char** save_ptr, struct command* command)
     return save_ptr;
 }
 
+/* function parse_variable_expansion
+receives the address of a pointer to current location in string being parsed
+returns a new pointer to updated location after all variables $$ have been parsed
+and replaced with process ID of this shell. process ID is reattached to input stream
+to be reinterpreted as an argument. parsing exits if a reserved keyword that is not a
+a variable is encountered.
+
+save_ptr: pointer to pointer to string under tokenization
+returns: save_ptr address
+*/
+
+char** parse_variable_expansion(char** save_ptr)
+{
+
+    char* new_str;
+    char* token = NULL;
+    if ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
+        if (strcmp(token, "$$") != 0) {
+
+            printf("(parse_variable_expansion) no $$ found!\n");
+            reattach_token(save_ptr, token, ' ');
+        } else {
+            printf("(parse_variable_expansion) found $$\n");
+            char* pid = "12345";
+            new_str = malloc(strlen(*save_ptr) + strlen(pid) + 2);
+            strcpy(new_str, pid);
+            strcat(new_str, " ");
+            strcat(new_str, *save_ptr);
+            // strcpy((new_str + strlen(pid) + 1), *save_ptr); // retain null terminator
+            printf("(parse_variable_expansion) new parse string: %s\n", new_str);
+            save_ptr = &new_str;
+            // reattach_token(save_ptr, pid, ' ');
+        }
+    }
+    return save_ptr;
+}
+
 /* function parse
 receives an input character array and then delegates to a series of specific parsers to populate a
 command struct representing the command and arguments to be executed by the shell.
@@ -455,6 +498,8 @@ struct command* parse(char* input)
 
         // parse redirects
         save_ptr = *parse_redirects(&save_ptr, command);
+
+        save_ptr = *parse_variable_expansion(&save_ptr);
 
         // current loc in string
 
