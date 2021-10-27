@@ -586,6 +586,7 @@ struct command* parse(char* input)
             i += 1;
         }
 
+        printf("        background: %s\n", (command->background == 1) ? "true" : "false");
         printf("        stdin: %s\n", (command->f_stdin));
         printf("        stdout: %s\n", (command->f_stdout));
         printf("        stderr: %s\n", (command->f_stderr));
