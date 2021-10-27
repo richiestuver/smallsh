@@ -32,6 +32,9 @@ struct command {
     char* cmd;
     int argc;
     char** argv;
+    char* f_stdin;
+    char* f_stdout;
+    char* f_stderr;
 };
 
 /* function display_prompt
@@ -185,6 +188,10 @@ struct command* init_empty_command()
 
     command->argc = 0;
 
+    command->f_stdin = NULL;
+    command->f_stdout = NULL;
+    command->f_stderr = NULL;
+
     return command;
 }
 
@@ -287,14 +294,27 @@ char** reattach_token(char** save_ptr, char* token, char delim)
     if (DEBUG) {
         printf("(reattach_token) token: %s\n", token);
         printf("(reattach_token) previous *save_ptr: %s\n", *save_ptr);
+        printf("(reattach_token) *save_ptr is empty is %d\n", (strcmp(*save_ptr, "") == 0));
+        printf("(reattach_token) *save_ptr is null0 is %d\n", (strcmp(*save_ptr, "\0") == 0));
+        printf("(reattach_token) *save_ptr is NULL is %d\n", (*save_ptr == NULL));
     }
 
-    char* loc = *(save_ptr) - sizeof(char) * 1;
-    *loc = delim;
-    *save_ptr = token;
+    // if the char at save_ptr is "" (empty), we will accidentally overwrite
+    // the last char of token with an extraneous delimiter. don't do that.
+    if ((strcmp(*save_ptr, "\0") == 0)) {
+        *save_ptr = token;
+    } else {
+        char* loc = *(save_ptr) - sizeof(char) * 1;
+        *loc = delim;
+        *save_ptr = token;
+    }
 
     if (DEBUG) {
         printf("(reattach_token) new *save_ptr: %s\n", *save_ptr);
+        printf("(reattach_token) token: %s\n", token);
+        printf("(reattach_token) *save_ptr is empty is %d\n", (strcmp(*save_ptr, "") == 0));
+        printf("(reattach_token) *save_ptr is null0 is %d\n", (strcmp(*save_ptr, "\0") == 0));
+        printf("(reattach_token) *save_ptr is NULL is %d\n", (*save_ptr == NULL));
     }
 
     return save_ptr;
@@ -366,16 +386,40 @@ char** parse_redirects(char** save_ptr, struct command* command)
         char* value = NULL;
         if (strlen(token) == strlen(keyword)) {
             value = strtok_r(NULL, " ", save_ptr);
-            if (value == NULL || check_reserved_words(value) != NULL) {
-                printf("(parse_redirects) syntax error: expected valid filename, not %s\n", value);
-                break;
-            }
 
         } else {
-            value = token + 1;
+            value = token + sizeof(char) * 1;
+        }
+
+        if (value == NULL || check_reserved_words(value) != NULL) {
+            printf("(parse_redirects) syntax error: expected valid filename, not %s\n", value);
+            break;
+        }
+
+        // add redirect file to command
+
+        if (strcmp(keyword, "<") == 0) {
+            if (command->f_stdin == NULL) {
+                command->f_stdin = malloc(strlen(value) + 1);
+                strcpy(command->f_stdin, value);
+            } else {
+                printf("(parse_redirects) only one file supported for stdin at this time. dropping %s\n", value);
+            }
+
+        } else if (strcmp(keyword, ">") == 0) {
+            if (command->f_stdout == NULL) {
+                command->f_stdout = malloc(strlen(value) + 1);
+                strcpy(command->f_stdout, value);
+            } else {
+                printf("(parse_redirects) only one file supported for stdout at this time. dropping %s\n", value);
+            }
+        } else {
+            printf("(parse_redirects) fatal error: unsupported redirect: %s\n", keyword);
+            exit(1);
         }
 
         printf("(parse_redirects) value for redirect %s: %s\n", keyword, value);
+        printf("(parse_redirects) *save_ptr: %s\n", *save_ptr);
     }
 
     return save_ptr;
@@ -425,6 +469,10 @@ struct command* parse(char* input)
             printf("        arg%d: %s\n", i, *(command->argv + i));
             i += 1;
         }
+
+        printf("        stdin: %s\n", (command->f_stdin));
+        printf("        stdout: %s\n", (command->f_stdout));
+        printf("        stderr: %s\n", (command->f_stderr));
     }
 
     return command;
