@@ -63,30 +63,47 @@ int main(void)
         switch (spawn_pid) {
         case -1:
             printf("(main) fatal error: spawning process failed. exiting...\n");
+            fflush(stdout);
             exit(1);
             break;
 
         case 0: // child
             printf("(CHILD %d) parent has PID %d\n", getpid(), getppid());
-            printf("(CHILD %d) executing sample command ls \n", getpid());
+            printf("(CHILD %d) executing command %s with args: ", getpid(), *(command->argv));
 
-            char* argv[] = { "ls", NULL };
-            if (execvp("ls", argv) == -1) {
-                printf("(CHILD %d) could not execute ls\n", getpid());
+            int i = 1;
+            while (*(command->argv + i) != NULL) {
+                printf("%s ", *(command->argv + i));
+                i += 1;
+            }
+            printf("\n");
+
+            fflush(stdout);
+
+            // execvp will never return if no error
+            if (execvp(*command->argv, command->argv) == -1) {
+                printf("(CHILD %d) could not execute %s ", getpid(), *(command->argv));
+                fflush(stdout);
+                perror("(execvp)");
+                exit(1); // be sure to exit if command failed! otherwise stuck in child loop
             };
 
             break;
 
         default: // parent
             printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
+            fflush(stdout);
+
             pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
 
             if WIFEXITED (child_status) {
                 printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
+                fflush(stdout);
             }
 
             if WIFSIGNALED (child_status) {
                 printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
+                fflush(stdout);
             }
 
             break;
