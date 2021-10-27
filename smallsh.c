@@ -22,6 +22,12 @@ char* RESERVED_WORDS[] = {
     NULL
 };
 
+char* REDIRECTS[] = {
+    "<",
+    ">",
+    NULL
+};
+
 struct command {
     char* cmd;
     int argc;
@@ -213,27 +219,29 @@ char** parse_command(char* source, char** save_ptr, struct command* command)
     return save_ptr;
 }
 
-/* function check_reserved_words
-determines if a token contains any reserved symbols or words and returns the
-reserved word or symbol found. order of preference is first encountered.
+/* function check_from_start
+checks whether the starting n chars of source string contains any full (string) element of array
 
-token: pointer to character array representing an extracted token in parser
-returns: character array containing word or symbol
+source: poiunter to string to be checked
+targets: array of strings against which to be checked. last element MUST be NULL
+for termination purposes
+returns: pointer to string containing keyword found or NULL if none found
 */
-char* check_reserved_words(char* token)
+
+char* check_from_start(char* source, char** keywords)
 {
     int i = 0;
-    while (*(RESERVED_WORDS + i) != NULL) {
+    while (*(keywords + i) != NULL) {
 
-        int cmp_size = (strlen(token) < strlen(*(RESERVED_WORDS + i))) ? strlen(token) : strlen(*(RESERVED_WORDS + i));
+        int cmp_size = (strlen(source) < strlen(*(keywords + i))) ? strlen(source) : strlen(*(keywords + i));
 
-        if (strncmp(token, *(RESERVED_WORDS + i), cmp_size) == 0) {
+        if (strncmp(source, *(keywords + i), cmp_size) == 0) {
 
             if (DEBUG) {
-                printf("(check_reserved_words) found: %s\n", *(RESERVED_WORDS + i));
+                printf("(check_from_start) found: %s\n", *(keywords + i));
             }
 
-            return *(RESERVED_WORDS + i);
+            return *(keywords + i);
         }
         i++;
     }
@@ -241,6 +249,29 @@ char* check_reserved_words(char* token)
     return NULL;
 }
 
+/* function check_reserved_words
+determines if a token contains a reserved symbols or words at its start and returns the
+reserved word or symbol found. order of preference is first encountered.
+
+token: pointer to character array representing an extracted token in parser
+returns: character array containing word or symbol
+*/
+char* check_reserved_words(char* token)
+{
+    return check_from_start(token, RESERVED_WORDS);
+}
+
+/* function check_redirects
+determines if a token contains a redirect symbol at its start and returns the
+symbol found. order of preference is first encountered.
+
+token: pointer to character array representing an extracted token in parser
+returns: character array containing word or symbol
+*/
+char* check_redirects(char* token)
+{
+    return check_from_start(token, REDIRECTS);
+}
 /* function reattach_token
 "undo" for a strtok call to reattach a token that was carved out of a string.
 does this by replacing the null terminator with the original delimiter char
@@ -258,10 +289,8 @@ char** reattach_token(char** save_ptr, char* token, char delim)
         printf("(reattach_token) previous *save_ptr: %s\n", *save_ptr);
     }
 
-    char* loc1 = *(save_ptr) - sizeof(char) * 1;
-    // char* loc2 = *(save_ptr) + sizeof(char) * strlen(token) - 2;
-    *loc1 = delim;
-    // *loc2 = delim;
+    char* loc = *(save_ptr) - sizeof(char) * 1;
+    *loc = delim;
     *save_ptr = token;
 
     if (DEBUG) {
@@ -274,7 +303,8 @@ char** reattach_token(char** save_ptr, char* token, char delim)
 /* function parse_args
 receives the address of a pointer to the current location in string being parsed
 returns a new pointer to updated location after all args have been extracted
-and stored in the command struct.
+and stored in the command struct. parsing exits if string is exhausted or
+a reserved keyword is encountered.
 
 save_ptr: pointer to pointer to string under tokenization
 command: pointer to command struct in which to save in argv
@@ -286,7 +316,7 @@ char** parse_args(char** save_ptr, struct command* command)
 
     while ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
         printf("(parse_args) found token: %s\n", token);
-
+        // if (check_from_start(token, RESERVED_WORDS) != NULL) {
         if (check_reserved_words(token) != NULL) {
             save_ptr = reattach_token(save_ptr, token, ' ');
             break;
@@ -294,13 +324,58 @@ char** parse_args(char** save_ptr, struct command* command)
 
         if (command->argc >= 512) {
             printf("(parse_args) size limit reached. stopping parse args to prevent buffer overflow...");
-
             break;
         }
 
         *(command->argv + command->argc) = token;
         *(command->argv + command->argc + 1) = NULL; // delimits argument list
         command->argc += 1;
+    }
+
+    return save_ptr;
+}
+
+/* function parse_redirects
+receives the address of a pointer to current location in string being parsed
+returns a new pointer to updated location after all redirects have been parsed
+and stored in command struct. parsing exits if a reserved keyword that is not a
+redirect is encountered.
+
+save_ptr: pointer to pointer to string under tokenization
+command: pointer to command struct in which to save in argv
+returns: save_ptr address
+*/
+char** parse_redirects(char** save_ptr, struct command* command)
+{
+
+    char* token = NULL;
+
+    while ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
+        printf("(parse_redirects) token: %s\n", token);
+        printf("(parse_redirects) *save_ptr: %s\n", *save_ptr);
+
+        char* keyword;
+        if ((keyword = check_redirects(token)) == NULL) {
+            save_ptr = reattach_token(save_ptr, token, ' ');
+            break;
+        }
+
+        // check if token is a standalone redirect symbol or attached to the value.
+        // if attached, need to strip it and store only the value. else value is next token.
+
+        char* value = NULL;
+        if (strlen(token) == strlen(keyword)) {
+            value = strtok_r(NULL, " ", save_ptr);
+            if (value == NULL || check_reserved_words(value) != NULL) {
+                printf("(parse_redirects) syntax error: expected valid filename, not %s\n", value);
+                break;
+            }
+
+        } else {
+            value = token + 1;
+        }
+
+        printf("(parse_redirects) value for redirect %s: %s\n", keyword, value);
     }
 
     return save_ptr;
@@ -335,13 +410,16 @@ struct command* parse(char* input)
     // parse args
     save_ptr = *parse_args(&save_ptr, command);
 
+    // parse redirects
+    save_ptr = *parse_redirects(&save_ptr, command);
+
     // current loc in string
     printf("(parse) remaining to be parsed:%s\n", save_ptr);
 
     // print command for debug
     if (DEBUG) {
         printf("(parse) fully parsed command struct is: \n");
-        printf("        command: %s\n", *(command->argv + 0));
+        printf("        command (arg0): %s\n", *(command->argv + 0));
         int i = 1;
         while (*(command->argv + i) != NULL) {
             printf("        arg%d: %s\n", i, *(command->argv + i));
@@ -349,38 +427,13 @@ struct command* parse(char* input)
         }
     }
 
-    // parse redirects
-
-    // while ((token = strtok_r(NULL, " ", &save_ptr)) != NULL) {
-
-    //     printf("(parse_input) found token: %s\n", token);
-
-    //     switch (token[0]) {
-
-    //     case '<':
-    //         printf("(parse_input) stdin redirect: <\n");
-    //         break;
-
-    //     case '>':
-    //         printf("(parse_input) stdout redirect: >\n");
-    //         break;
-
-    //     case '&':
-    //         printf("(parse_input) background operator: &\n");
-    //         break;
-
-    //     default:
-    //         break;
-    //     }
-
-    //     // parse background task
-    // }
     return command;
 }
 
 int main(void)
 {
     char* user_input;
+    struct command* command;
     printf("Hello World!\n");
 
     while (true) {
@@ -397,7 +450,7 @@ int main(void)
             continue;
         };
 
-        parse(user_input);
+        command = parse(user_input);
         printf("(main) executing %s\n", user_input);
     }
     return 0;
