@@ -15,6 +15,7 @@ Created: 10-20-21
 
 #define DEBUG true
 #define PROMPT ": "
+#define DEV_NULL "/dev/null"
 
 char* RESERVED_WORDS[] = {
     "<",
@@ -37,6 +38,7 @@ struct command {
     char* f_stdin;
     char* f_stdout;
     char* f_stderr;
+    bool background;
 };
 
 /* function display_prompt
@@ -193,6 +195,8 @@ struct command* init_empty_command()
     command->f_stdin = NULL;
     command->f_stdout = NULL;
     command->f_stderr = NULL;
+
+    command->background = false;
 
     return command;
 }
@@ -483,7 +487,7 @@ parsing exits and token & is treated as text if not the last token in the stream
 save_ptr: pointer to pointer to stream under tokenization
 returns: save_ptr address
 */
-char** parse_background_operator(char** save_ptr)
+char** parse_background_operator(char** save_ptr, struct command* command)
 {
     char* token = NULL;
 
@@ -504,6 +508,20 @@ char** parse_background_operator(char** save_ptr)
             break;
         }
         printf("(parse_background_operator) detected background operator &\n");
+
+        command->background = true;
+
+        if (command->f_stdin == NULL) {
+            command->f_stdin = DEV_NULL;
+        }
+
+        if (command->f_stdout == NULL) {
+            command->f_stdout = DEV_NULL;
+        }
+
+        if (command->f_stderr == NULL) {
+            command->f_stderr = DEV_NULL;
+        }
     }
     return save_ptr;
 }
@@ -547,7 +565,7 @@ struct command* parse(char* input)
         save_ptr = *parse_variable_expansion(&save_ptr);
 
         // parse background operator
-        save_ptr = *parse_background_operator(&save_ptr);
+        save_ptr = *parse_background_operator(&save_ptr, command);
 
         // current loc in string
 
