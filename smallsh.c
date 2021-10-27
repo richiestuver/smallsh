@@ -7,9 +7,13 @@ Created: 10-20-21
 
 */
 
+#include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include "input.h"
 #include "parser.h"
@@ -50,6 +54,42 @@ int main(void)
             printf("        stdin: %s\n", (command->f_stdin));
             printf("        stdout: %s\n", (command->f_stdout));
             printf("        stderr: %s\n", (command->f_stderr));
+        }
+
+        int child_status;
+        pid_t spawn_pid = INT_MIN;
+        spawn_pid = fork();
+
+        switch (spawn_pid) {
+        case -1:
+            printf("(main) fatal error: spawning process failed. exiting...\n");
+            exit(1);
+            break;
+
+        case 0: // child
+            printf("(CHILD %d) parent has PID %d\n", getpid(), getppid());
+            printf("(CHILD %d) executing sample command ls \n", getpid());
+
+            char* argv[] = { "ls", NULL };
+            if (execvp("ls", argv) == -1) {
+                printf("(CHILD %d) could not execute ls\n", getpid());
+            };
+
+            break;
+
+        default: // parent
+            printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
+            pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
+
+            if WIFEXITED (child_status) {
+                printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
+            }
+
+            if WIFSIGNALED (child_status) {
+                printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
+            }
+
+            break;
         }
     }
     return 0;
