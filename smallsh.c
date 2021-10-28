@@ -7,6 +7,7 @@ Created: 10-20-21
 
 */
 
+#include <fcntl.h>
 #include <limits.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -82,12 +83,40 @@ int main(void)
                 fflush(stdout);
             }
 
-            // FOR GRADING SCRIPT -- NOT IMPLEMENTED
-            if (strcmp((*command->argv), "status") == 0) {
-                printf("0");
-                fflush(stdout);
-            } else if ((strcmp((*command->argv), "exit") == 0)) {
-                exit(0);
+            // redirect stdin
+            if (command->f_stdin != NULL) {
+                int fd = open(command->f_stdin, O_RDONLY);
+                if (fd == -1) {
+                    printf("(CHILD %d) could not redirect stdin to %s ", getpid(), command->f_stdin);
+                    fflush(stdout);
+                    perror("(open)");
+                    exit(1);
+                }
+
+                if (dup2(fd, 0) == -1) {
+                    printf("(CHILD %d) could not redirect stdin to %s ", getpid(), command->f_stdin);
+                    fflush(stdout);
+                    perror("(dup2)");
+                    exit(2);
+                }
+            }
+
+            // redirect stdout
+            if (command->f_stdout != NULL) {
+                int fd = open(command->f_stdout, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (fd == -1) {
+                    printf("(CHILD %d) could not redirect stdout to %s ", getpid(), command->f_stdin);
+                    fflush(stdout);
+                    perror("(open)");
+                    exit(1);
+                }
+
+                if (dup2(fd, 1) == -1) {
+                    printf("(CHILD %d) could not redirect stdout to %s ", getpid(), command->f_stdin);
+                    fflush(stdout);
+                    perror("(dup2)");
+                    exit(2);
+                }
             }
 
             // execvp will never return if no error
