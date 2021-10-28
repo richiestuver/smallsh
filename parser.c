@@ -306,28 +306,40 @@ returns: save_ptr address
 char** parse_variable_expansion(char** save_ptr)
 {
 
-    char* new_str;
+    char* var_ptr;
+    char* new_str = NULL;
     char* token = NULL;
-    if ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
-        if (strcmp(token, "$$") != 0) {
+    int count = 0;
+    while ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
+        if ((var_ptr = strstr(token, "$$")) == NULL) {
 
             if (DEBUG_PARSER) {
                 printf("(parse_variable_expansion) no $$ found!\n");
             }
 
             reattach_token(save_ptr, token, ' ');
+            break;
         } else {
 
             if (DEBUG_PARSER) {
                 printf("(parse_variable_expansion) found $$\n");
             }
 
+            count++;
             // assign PID to $$
             char* pid = malloc(sizeof(char) * 12); // allocate 11 chars for digits of PID
             snprintf(pid, 12, "%d", getpid());
-            new_str = malloc(strlen(*save_ptr) + strlen(pid) + 2);
-            strcpy(new_str, pid);
-            strcat(new_str, " ");
+            new_str = malloc(strlen(*save_ptr) + strlen(token) + strlen(pid) * count);
+            strcpy(new_str, token);
+            strcpy((new_str + (var_ptr - token)), pid);
+
+            // find the length until the next null terminator. if token was not
+            // empty when $$ encountered, need to splice that on to the end.
+            if (strlen((var_ptr + strlen("$$"))) != 0) {
+                strcat(new_str, (var_ptr + strlen("$$")));
+            }
+
+            strcat(new_str, " "); // delimiter
             strcat(new_str, *save_ptr);
 
             if (DEBUG_PARSER) {
@@ -400,7 +412,8 @@ returns: pointer to a populated command struct
 struct command* parse(char* input)
 {
 
-    struct command* command = init_empty_command();
+    struct command* command = NULL;
+    command = init_empty_command();
 
     if (command == NULL) {
         printf("(parse) fatal error - could not initialize command structure. exiting...\n");
@@ -413,19 +426,23 @@ struct command* parse(char* input)
     char* tokenize = malloc(sizeof(char) * (strlen(input) + 1));
     strcpy(tokenize, input);
 
-    // parse command -- WILL call strtok_r. this should be for the FIRST time
-    save_ptr = *parse_command(tokenize, &save_ptr, command);
+    // // parse command -- WILL call strtok_r. this should be for the FIRST time
+    // save_ptr = *parse_command(tokenize, &save_ptr, command);
+
+    char* token = strtok_r(tokenize, " ", &save_ptr);
+    reattach_token(&save_ptr, token, ' ');
 
     // TODO: protect against infinite loop, make sure all reserved words are handled.
     do {
+
+        // parse variable expansion
+        save_ptr = *parse_variable_expansion(&save_ptr);
+
         // parse args
         save_ptr = *parse_args(&save_ptr, command);
 
         // parse redirects
         save_ptr = *parse_redirects(&save_ptr, command);
-
-        // parse variable expansion
-        save_ptr = *parse_variable_expansion(&save_ptr);
 
         // parse background operator
         save_ptr = *parse_background_operator(&save_ptr, command);

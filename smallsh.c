@@ -56,58 +56,58 @@ int main(void)
             printf("        stderr: %s\n", (command->f_stderr));
         }
 
-        int child_status;
-        pid_t spawn_pid = INT_MIN;
-        spawn_pid = fork();
+        // int child_status;
+        // pid_t spawn_pid = INT_MIN;
+        // spawn_pid = fork();
 
-        switch (spawn_pid) {
-        case -1:
-            printf("(main) fatal error: spawning process failed. exiting...\n");
-            fflush(stdout);
-            exit(1);
-            break;
+        // switch (spawn_pid) {
+        // case -1:
+        //     printf("(main) fatal error: spawning process failed. exiting...\n");
+        //     fflush(stdout);
+        //     exit(1);
+        //     break;
 
-        case 0: // child
-            printf("(CHILD %d) parent has PID %d\n", getpid(), getppid());
-            printf("(CHILD %d) executing command %s with args: ", getpid(), *(command->argv));
+        // case 0: // child
+        //     printf("(CHILD %d) parent has PID %d\n", getpid(), getppid());
+        //     printf("(CHILD %d) executing command %s with args: ", getpid(), *(command->argv));
 
-            int i = 1;
-            while (*(command->argv + i) != NULL) {
-                printf("%s ", *(command->argv + i));
-                i += 1;
-            }
-            printf("\n");
+        //     int i = 1;
+        //     while (*(command->argv + i) != NULL) {
+        //         printf("%s ", *(command->argv + i));
+        //         i += 1;
+        //     }
+        //     printf("\n");
 
-            fflush(stdout);
+        //     fflush(stdout);
 
-            // execvp will never return if no error
-            if (execvp(*command->argv, command->argv) == -1) {
-                printf("(CHILD %d) could not execute %s ", getpid(), *(command->argv));
-                fflush(stdout);
-                perror("(execvp)");
-                exit(1); // be sure to exit if command failed! otherwise stuck in child loop
-            };
+        //     // execvp will never return if no error
+        //     if (execvp(*command->argv, command->argv) == -1) {
+        //         printf("(CHILD %d) could not execute %s ", getpid(), *(command->argv));
+        //         fflush(stdout);
+        //         perror("(execvp)");
+        //         exit(1); // be sure to exit if command failed! otherwise stuck in child loop
+        //     };
 
-            break;
+        //     break;
 
-        default: // parent
-            printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
-            fflush(stdout);
+        // default: // parent
+        //     printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
+        //     fflush(stdout);
 
-            pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
+        //     pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
 
-            if WIFEXITED (child_status) {
-                printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
-                fflush(stdout);
-            }
+        //     if WIFEXITED (child_status) {
+        //         printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
+        //         fflush(stdout);
+        //     }
 
-            if WIFSIGNALED (child_status) {
-                printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
-                fflush(stdout);
-            }
+        //     if WIFSIGNALED (child_status) {
+        //         printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
+        //         fflush(stdout);
+        //     }
 
-            break;
-        }
+        //     break;
+        // }
     }
     return 0;
 }
