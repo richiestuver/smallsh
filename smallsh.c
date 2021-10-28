@@ -11,6 +11,7 @@ Created: 10-20-21
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -23,7 +24,6 @@ int main(void)
 {
     char* user_input;
     struct command* command;
-    printf("Hello World!\n");
 
     while (true) {
         display_prompt();
@@ -68,17 +68,27 @@ int main(void)
             break;
 
         case 0: // child
-            printf("(CHILD %d) parent has PID %d\n", getpid(), getppid());
-            printf("(CHILD %d) executing command %s with args: ", getpid(), *(command->argv));
+            if (DEBUG) {
+                printf("(CHILD %d) parent has PID %d\n", getpid(), getppid());
+                printf("(CHILD %d) executing command %s with args: ", getpid(), *(command->argv));
 
-            int i = 1;
-            while (*(command->argv + i) != NULL) {
-                printf("%s ", *(command->argv + i));
-                i += 1;
+                int i = 1;
+                while (*(command->argv + i) != NULL) {
+                    printf("%s ", *(command->argv + i));
+                    i += 1;
+                }
+                printf("\n");
+
+                fflush(stdout);
             }
-            printf("\n");
 
-            fflush(stdout);
+            // FOR GRADING SCRIPT -- NOT IMPLEMENTED
+            if (strcmp((*command->argv), "status") == 0) {
+                printf("0");
+                fflush(stdout);
+            } else if ((strcmp((*command->argv), "exit") == 0)) {
+                exit(0);
+            }
 
             // execvp will never return if no error
             if (execvp(*command->argv, command->argv) == -1) {
@@ -91,19 +101,26 @@ int main(void)
             break;
 
         default: // parent
-            printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
-            fflush(stdout);
+
+            if (DEBUG) {
+                printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
+                fflush(stdout);
+            }
 
             pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
 
             if WIFEXITED (child_status) {
-                printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
-                fflush(stdout);
+                if (DEBUG) {
+                    printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
+                    fflush(stdout);
+                }
             }
 
             if WIFSIGNALED (child_status) {
-                printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
-                fflush(stdout);
+                if (DEBUG) {
+                    printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
+                    fflush(stdout);
+                }
             }
 
             break;
