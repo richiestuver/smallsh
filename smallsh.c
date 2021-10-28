@@ -29,7 +29,6 @@ char* BUILTIN_COMMANDS[] = { "exit", "cd", "status" };
 exits the shell and terminates all other processes or jobs that the shell has started.
 returns: 0
 */
-
 void builtin_exit(void)
 {
     if (DEBUG) {
@@ -38,6 +37,11 @@ void builtin_exit(void)
     exit(0);
 }
 
+/* function builtin_cd
+receives a struct command which contains an optional argument for
+destination directory. if argument not provided, cd defaults to
+changing to the HOME directory provided in environment.
+*/
 void builtin_cd(struct command* command)
 {
 
