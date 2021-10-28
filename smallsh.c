@@ -31,9 +31,7 @@ int main(void)
     while (true) {
         display_prompt();
 
-        user_input = get_user_input();
-        user_input = strip_newlines(user_input);
-        user_input = strip_comments(user_input);
+        user_input = strip_comments(strip_newlines(get_user_input()));
 
         if (user_input == NULL) {
             if (DEBUG) {
