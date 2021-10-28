@@ -45,9 +45,13 @@ void builtin_cd(struct command* command)
 
     if (dest == NULL) {
         char* HOME = getenv("HOME");
-        printf("(builtin_cd %d) changing to HOME dir %s\n", getpid(), HOME);
-
         dest = HOME;
+
+        if (dest == NULL) {
+            printf("(builtin_cd %d) dir not changed: no environment variable found for HOME\n", getpid());
+            fflush(stdout);
+            return;
+        }
     }
 
     if (chdir(dest) != 0) {
@@ -56,8 +60,10 @@ void builtin_cd(struct command* command)
         perror("(chdir)");
     };
 
-    char* cwd = NULL;
-    printf("(builtin_cd %d) %s\n", getpid(), getcwd(cwd, 0));
+    if (DEBUG) {
+        char* cwd = NULL;
+        printf("(builtin_cd %d) %s\n", getpid(), getcwd(cwd, 0));
+    }
 }
 
 int main(void)
