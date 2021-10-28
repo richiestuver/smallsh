@@ -9,16 +9,6 @@ Created: 10-27-21
 #define DEBUG_PARSER false
 #define DEV_NULL "/dev/null"
 
-struct command {
-    char* cmd;
-    int argc;
-    char** argv;
-    char* f_stdin;
-    char* f_stdout;
-    char* f_stderr;
-    bool background;
-};
-
 /* function init_empty_command
 initializes a new command struct by allocating memory for the struct itself as
 well as the argv array. other non-pointer members are initialized.

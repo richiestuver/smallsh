@@ -4,6 +4,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "command.h"
 #include "parser.h"
 
 char* RESERVED_WORDS[] = {
