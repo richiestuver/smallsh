@@ -22,6 +22,7 @@ Created: 10-20-21
 #include "launch.h"
 #include "parser.h"
 #include "smallsh.h"
+#include "status.h"
 
 char* BUILTIN_COMMANDS[] = { "exit", "cd", "status" };
 
@@ -72,8 +73,12 @@ void builtin_cd(struct command* command)
 
 int main(void)
 {
+
     char* user_input;
-    struct command* command;
+    struct status* stat;
+    struct command* command = NULL;
+
+    stat = init_status();
 
     while (true) {
         display_prompt();
@@ -116,7 +121,7 @@ int main(void)
             fflush(stdout);
             builtin_cd(command);
         } else {
-            launch(command);
+            launch(command, stat);
         }
     }
     return 0;

@@ -1,9 +1,4 @@
-#define DEBUG_LAUNCH true
+#include "command.h"
+#include "status.h"
 
-/* function launch
-accepts a fully filled out command struct and executes the command with provided arguments
-and values for stdin, stdout, and stderr. If background is true, command will be run in the background.
-
-command: must be a fully filled command struct.
-*/
-void launch(struct command* command);
+void launch(struct command* command, struct status* status_t);

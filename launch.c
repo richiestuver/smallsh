@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include "command.h"
-#include "parser.h"
+#include "status.h"
 
 #define DEBUG_LAUNCH true
 
@@ -18,8 +18,9 @@ accepts a fully filled out command struct and executes the command with provided
 and values for stdin, stdout, and stderr. If background is true, command will be run in the background.
 
 command: must be a fully filled command struct.
+status: struct to update the command execution status
 */
-void launch(struct command* command)
+void launch(struct command* command, struct status* status_t)
 {
     int child_status;
     pid_t spawn_pid = INT_MIN;
@@ -107,6 +108,13 @@ void launch(struct command* command)
                 printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
                 fflush(stdout);
             }
+
+            // status->code = WEXITSTATUS(child_status);
+            // status->pid = child_pid;
+            // status->name = malloc(sizeof(strlen(*command->argv) + 1));
+            // status->name = *command->argv;
+            // status->exited = true;
+            // status->signaled = false;
         }
 
         if WIFSIGNALED (child_status) {

@@ -1,4 +1,6 @@
 // contains definition for command struct used throughout shell execution
+#ifndef COMMAND_H
+#define COMMAND_H
 
 struct command {
     char* cmd;
@@ -9,3 +11,5 @@ struct command {
     char* f_stderr;
     bool background;
 };
+
+#endif
