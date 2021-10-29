@@ -69,6 +69,22 @@ void builtin_cd(struct command* command)
         char* cwd = NULL;
         printf("(builtin_cd %d) %s\n", getpid(), getcwd(cwd, 0));
     }
+    return;
+}
+
+void builtin_status(struct status* status)
+{
+
+    if (status->exited) {
+        printf("exit value %d\n", status->code);
+    }
+
+    else { // status->signaled == true
+        printf("terminated by signal %d\n", status->code);
+    }
+
+    fflush(stdout);
+    return;
 }
 
 int main(void)
@@ -120,7 +136,13 @@ int main(void)
             printf("(main %d) LAUNCHING cd\n", getpid());
             fflush(stdout);
             builtin_cd(command);
-        } else {
+        } else if (strcmp(*(command->argv), "status") == 0) {
+            printf("(main %d) LAUNCHING status\n", getpid());
+            fflush(stdout);
+            builtin_status(stat);
+        }
+
+        else {
             launch(command, stat);
         }
     }
