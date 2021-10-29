@@ -17,75 +17,13 @@ Created: 10-20-21
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "builtins.h"
 #include "command.h"
 #include "input.h"
 #include "launch.h"
 #include "parser.h"
 #include "smallsh.h"
 #include "status.h"
-
-char* BUILTIN_COMMANDS[] = { "exit", "cd", "status" };
-
-/* function exit
-exits the shell and terminates all other processes or jobs that the shell has started.
-returns: 0
-*/
-void builtin_exit(void)
-{
-    if (DEBUG) {
-        printf("(builtin_exit %d) terminating shell...\n", getpid());
-    }
-    exit(0);
-}
-
-/* function builtin_cd
-receives a struct command which contains an optional argument for
-destination directory. if argument not provided, cd defaults to
-changing to the HOME directory provided in environment.
-*/
-void builtin_cd(struct command* command)
-{
-
-    char* dest = *(command->argv + 1);
-
-    if (dest == NULL) {
-        char* HOME = getenv("HOME");
-        dest = HOME;
-
-        if (dest == NULL) {
-            printf("(builtin_cd %d) dir not changed: no environment variable found for HOME\n", getpid());
-            fflush(stdout);
-            return;
-        }
-    }
-
-    if (chdir(dest) != 0) {
-        printf("(builtin_cd %d) cannot change to dir %s ", getpid(), dest);
-        fflush(stdout);
-        perror("(chdir)");
-    };
-
-    if (DEBUG) {
-        char* cwd = NULL;
-        printf("(builtin_cd %d) %s\n", getpid(), getcwd(cwd, 0));
-    }
-    return;
-}
-
-void builtin_status(struct status* status)
-{
-
-    if (status->exited) {
-        printf("exit value %d\n", status->code);
-    }
-
-    else { // status->signaled == true
-        printf("terminated by signal %d\n", status->code);
-    }
-
-    fflush(stdout);
-    return;
-}
 
 int main(void)
 {
@@ -126,20 +64,13 @@ int main(void)
             printf("        stderr: %s\n", (command->f_stderr));
         }
 
-        // TODO: builtin commands for exit, cd and status
+        char* cmd;
+        if ((cmd = check_builtins(*(command->argv))) != NULL) {
+            if (DEBUG) {
+                printf("((main %d) found builtin cmd %s\n", getpid(), cmd);
+            }
 
-        if (strcmp(*(command->argv), "exit") == 0) {
-            printf("(main %d) LAUNCHING exit\n", getpid());
-            fflush(stdout);
-            builtin_exit();
-        } else if (strcmp(*(command->argv), "cd") == 0) {
-            printf("(main %d) LAUNCHING cd\n", getpid());
-            fflush(stdout);
-            builtin_cd(command);
-        } else if (strcmp(*(command->argv), "status") == 0) {
-            printf("(main %d) LAUNCHING status\n", getpid());
-            fflush(stdout);
-            builtin_status(stat);
+            launch_builtin(command, stat);
         }
 
         else {
