@@ -6,16 +6,8 @@ Created: 10-27-21
 
 */
 
-#define DEBUG_PARSER true
+#define DEBUG_PARSER false
 #define DEV_NULL "/dev/null"
-
-/* function init_empty_command
-initializes a new command struct by allocating memory for the struct itself as
-well as the argv array. other non-pointer members are initialized.
-
-returns: pointer to an empty command struct with memory allocated.
- */
-struct command* init_empty_command();
 
 /* function parse_command
 parses an input character array and saves the first space-delimited token
@@ -94,6 +86,12 @@ a variable is encountered.
 save_ptr: pointer to pointer to stream under tokenization
 returns: save_ptr address
 */
+
+/* function check_contains
+checks whether a reserved symbol is contained within another token. returns a pointer
+to location in string containing the symbol
+*/
+struct keyword* check_contains(char* source, char** keywords);
 
 char** parse_variable_expansion(char** save_ptr);
 
