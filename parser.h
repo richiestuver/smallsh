@@ -6,7 +6,7 @@ Created: 10-27-21
 
 */
 
-#define DEBUG_PARSER false
+#define DEBUG_PARSER true
 #define DEV_NULL "/dev/null"
 
 /* function init_empty_command

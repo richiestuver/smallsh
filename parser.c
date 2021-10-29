@@ -21,6 +21,11 @@ char* REDIRECTS[] = {
     NULL
 };
 
+struct keyword {
+    char* symbol;
+    char** ptr;
+};
+
 /* function init_empty_command
 initializes a new command struct by allocating memory for the struct itself as
 well as the argv array. other non-pointer members are initialized.
@@ -85,6 +90,45 @@ char** parse_command(char* source, char** save_ptr, struct command* command)
     return save_ptr;
 }
 
+/* function check_contains
+checks whether a reserved symbol is contained within another token. returns a pointer
+to location in string containing the symbol
+*/
+struct keyword* check_contains(char* source, char** keywords)
+{
+
+    struct keyword* keyword;
+    keyword = malloc(sizeof(struct keyword));
+    keyword->ptr = NULL;
+    keyword->symbol = NULL;
+
+    // this loop cycles through every keyword and bails out early before assigning
+    // a match to keyword struct. note that incrementor occurs WITHIN expression assignment
+    int i = -1;
+    while (*(keywords + ++i) != NULL) {
+
+        printf("(check_contains) source: %s, keyword: %s \n", source, *(keywords + i));
+
+        if ((strlen(source)) < strlen(*(keywords + i))) {
+            continue;
+        }
+
+        char* loc;
+        if ((loc = strstr(source, *(keywords + i))) == NULL) {
+            printf("(check_contains) found NOTHING.\n");
+            continue;
+        }
+
+        keyword->ptr = &loc;
+        keyword->symbol = *(keywords + i);
+
+        printf("(check_contains) found symbol: %s at %p\n", keyword->symbol, &keyword->ptr);
+        break;
+    }
+
+    return keyword;
+}
+
 /* function check_from_start
 checks whether the starting n chars of source string contains any full (string) element of array
 
@@ -128,7 +172,8 @@ returns: character array containing word or symbol
 */
 char* check_reserved_words(char* token)
 {
-    return check_from_start(token, RESERVED_WORDS);
+    struct keyword* keyword = check_contains(token, RESERVED_WORDS);
+    return keyword->symbol;
 }
 
 /* function check_redirects
@@ -140,7 +185,9 @@ returns: character array containing word or symbol
 */
 char* check_redirects(char* token)
 {
-    return check_from_start(token, REDIRECTS);
+    struct keyword* keyword = check_contains(token, REDIRECTS);
+    return keyword->symbol;
+    // return check_from_start(token, REDIRECTS);
 }
 /* function reattach_token
 "undo" for a strtok call to reattach a token that was carved out of a string.

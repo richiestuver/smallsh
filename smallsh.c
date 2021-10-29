@@ -64,18 +64,18 @@ int main(void)
             printf("        stderr: %s\n", (command->f_stderr));
         }
 
-        char* cmd;
-        if ((cmd = check_builtins(*(command->argv))) != NULL) {
-            if (DEBUG) {
-                printf("((main %d) found builtin cmd %s\n", getpid(), cmd);
-            }
+        // char* cmd;
+        // if ((cmd = check_builtins(*(command->argv))) != NULL) {
+        //     if (DEBUG) {
+        //         printf("((main %d) found builtin cmd %s\n", getpid(), cmd);
+        //     }
 
-            launch_builtin(command, stat);
-        }
+        //     launch_builtin(command, stat);
+        // }
 
-        else {
-            launch(command, stat);
-        }
+        // else {
+        //     launch(command, stat);
+        // }
     }
     return 0;
 }
