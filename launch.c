@@ -9,9 +9,8 @@
 #include <unistd.h>
 
 #include "command.h"
+#include "launch.h"
 #include "status.h"
-
-#define DEBUG_LAUNCH true
 
 /* function launch
 accepts a fully filled out command struct and executes the command with provided arguments
