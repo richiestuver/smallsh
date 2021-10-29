@@ -4,6 +4,11 @@
 
 #include <sys/types.h>
 
+enum EXIT_TYPE {
+    EXIT,
+    SIGNAL
+};
+
 struct status {
     pid_t pid;
     char* name;
@@ -13,6 +18,6 @@ struct status {
 };
 struct status* init_status();
 
-struct status* update_status(struct status* status, int code, bool exited, bool signaled, pid_t pid, char* name);
+struct status* update_status(struct status* status, pid_t pid, char* name, int code, enum EXIT_TYPE exit_type);
 
 #endif

@@ -3,4 +3,4 @@
 
 #define DEBUG_LAUNCH true
 
-void launch(struct command* command, struct status* status_t);
+void launch(struct command* command, struct status* status);

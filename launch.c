@@ -19,7 +19,7 @@ and values for stdin, stdout, and stderr. If background is true, command will be
 command: must be a fully filled command struct.
 status: struct to update the command execution status
 */
-void launch(struct command* command, struct status* status_t)
+void launch(struct command* command, struct status* status)
 {
     int child_status;
     pid_t spawn_pid = INT_MIN;
@@ -108,17 +108,32 @@ void launch(struct command* command, struct status* status_t)
                 fflush(stdout);
             }
 
-            // status->code = WEXITSTATUS(child_status);
-            // status->pid = child_pid;
-            // status->name = malloc(sizeof(strlen(*command->argv) + 1));
-            // status->name = *command->argv;
-            // status->exited = true;
-            // status->signaled = false;
+            status = update_status(status, child_pid, *command->argv, WEXITSTATUS(child_status), EXIT);
+
+            if (DEBUG_LAUNCH) {
+                printf("(PARENT %d) code: %d \n", getpid(), status->code);
+                printf("(PARENT %d) pid: %d \n", getpid(), status->pid);
+                printf("(PARENT %d) name: %s \n", getpid(), status->name);
+                printf("(PARENT %d) exited: %s \n", getpid(), (status->exited) == 1 ? "true" : "false");
+                printf("(PARENT %d) signaled: %s \n", getpid(), (status->signaled) == 1 ? "true" : "false");
+                fflush(stdout);
+            }
         }
 
         if WIFSIGNALED (child_status) {
             if (DEBUG_LAUNCH) {
                 printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
+                fflush(stdout);
+            }
+
+            status = update_status(status, child_pid, *command->argv, WTERMSIG(child_status), SIGNAL);
+
+            if (DEBUG_LAUNCH) {
+                printf("(PARENT %d) code: %d \n", getpid(), status->code);
+                printf("(PARENT %d) pid: %d \n", getpid(), status->pid);
+                printf("(PARENT %d) name: %s \n", getpid(), status->name);
+                printf("(PARENT %d) exited: %s \n", getpid(), (status->exited) == 1 ? "true" : "false");
+                printf("(PARENT %d) signaled: %s \n", getpid(), (status->signaled) == 1 ? "true" : "false");
                 fflush(stdout);
             }
         }

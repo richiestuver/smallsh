@@ -13,7 +13,7 @@ struct status* init_status()
     status = malloc(sizeof(struct status));
     status->code = 0;
     status->exited = true;
-    status->signaled = false;
+    status->signaled = !status->exited;
     status->pid = getpid();
     status->name = malloc(sizeof(char) * 2048);
     strcpy(status->name, "smallsh");
@@ -21,11 +21,12 @@ struct status* init_status()
     return status;
 }
 
-struct status* update_status(struct status* status, int code, bool exited, bool signaled, pid_t pid, char* name)
+struct status* update_status(struct status* status, pid_t pid, char* name, int code, enum EXIT_TYPE exit_type)
 {
+
     status->code = code;
-    status->exited = exited;
-    status->signaled = signaled;
+    status->exited = (exit_type == EXIT) ? true : false;
+    status->signaled = !status->exited;
     status->pid = pid;
     free(status->name);
     status->name = malloc(sizeof(char) * 2048);
