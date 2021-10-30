@@ -145,16 +145,12 @@ void cleanup_children(int signal)
     }
 }
 
-// void toggle_background_on_SIGTSTP(struct exec_env* exec_env)
-// {
-//     struct sigaction catch = { 0 };
-//     catch.sa_handler = toggle_background;
-//     catch.sa_flags = 0;
-
-//     sigfillset(&catch.sa_mask);
-//     sigaction(signal, &catch, NULL);
-// }
-
+/* function toggle_background
+accepts a signal identifier (unused but required by sigaction sa_handler callback definition)
+and toggles a global background_enabled bool held in an exec_env struct. this bool is a shared
+state for the entire shell and is meant to be read by the launcher routine to determine
+behavior of the & background operator.
+*/
 void toggle_background(int signal)
 {
     extern struct exec_env* exec_env;

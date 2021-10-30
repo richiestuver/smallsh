@@ -48,6 +48,12 @@ is reported if DEBUG_SIG flag is set.
 */
 void cleanup_children(int signal);
 
+/* function toggle_background
+accepts a signal identifier (unused but required by sigaction sa_handler callback definition)
+and toggles a global background_enabled bool held in an exec_env struct. this bool is a shared
+state for the entire shell and is meant to be read by the launcher routine to determine
+behavior of the & background operator.
+*/
 void toggle_background(int signal);
 
 #endif
