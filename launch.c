@@ -26,6 +26,8 @@ void launch(struct command* command, struct status* status)
 
     extern struct exec_env* exec_env;
 
+    sigset_t* block_SIGCHLD = NULL;
+
     int child_status;
     pid_t spawn_pid = INT_MIN;
     spawn_pid = fork();
@@ -108,7 +110,7 @@ void launch(struct command* command, struct status* status)
     default: // parent
 
         if (!(exec_env->background_enabled && command->background)) {
-
+            block_SIGCHLD = block(SIGCHLD);
             if (DEBUG_LAUNCH) {
                 printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
                 fflush(stdout);
@@ -116,6 +118,7 @@ void launch(struct command* command, struct status* status)
 
             pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
             unblock(block_SIGTSTP);
+            unblock(block_SIGCHLD);
 
             if (DEBUG_LAUNCH) {
                 printf("(PARENT %d) waitpid terminated with %d\n", getpid(), child_pid);
