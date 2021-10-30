@@ -11,6 +11,8 @@ up from a child process. presents a newline to stdout file. optional debug messa
 */
 void catch_and_do_nothing(int signal);
 
+void register_signal(int signal);
+
 /* function register_SIGINT
 defines a new sigaction struct and registers the provided handler to
 catch SIGINT. All other signals blocked while handler executes and no other

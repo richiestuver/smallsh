@@ -83,6 +83,16 @@ void cleanup_children(int signal)
     }
 }
 
+void register_signal(int signal, void (*handler)(int))
+{
+    struct sigaction catch = { 0 };
+    catch.sa_handler = handler;
+    catch.sa_flags = 0;
+
+    sigfillset(&catch.sa_mask);
+    sigaction(signal, &catch, NULL);
+}
+
 /* function register_SIGINT
 defines a new sigaction struct and registers the provided handler to
 catch SIGINT. All other signals blocked while handler executes and no other
@@ -90,12 +100,7 @@ flags are set.
 */
 void register_SIGINT(void (*handler)(int))
 {
-    struct sigaction SIGINT_catch = { 0 };
-    SIGINT_catch.sa_handler = handler;
-    SIGINT_catch.sa_flags = 0;
-
-    sigfillset(&SIGINT_catch.sa_mask);
-    sigaction(SIGINT, &SIGINT_catch, NULL);
+    register_signal(SIGINT, handler);
 }
 
 /* function register_SIGCHLD
@@ -105,10 +110,5 @@ flags are set.
 */
 void register_SIGCHLD(void (*handler)(int))
 {
-    struct sigaction SIGCHLD_catch = { 0 };
-    SIGCHLD_catch.sa_handler = handler;
-    SIGCHLD_catch.sa_flags = 0;
-
-    sigfillset(&SIGCHLD_catch.sa_mask);
-    sigaction(SIGCHLD, &SIGCHLD_catch, NULL);
+    register_signal(SIGCHLD, handler);
 }
