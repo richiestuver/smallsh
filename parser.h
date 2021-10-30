@@ -6,7 +6,7 @@ Created: 10-27-21
 
 */
 
-#define DEBUG_PARSER false
+#define DEBUG_PARSER true
 #define DEV_NULL "/dev/null"
 
 /* function parse_command
@@ -93,7 +93,7 @@ to location in string containing the symbol
 */
 struct keyword* check_contains(char* source, char** keywords);
 
-char** parse_variable_expansion(char** save_ptr);
+char* parse_variable_expansion(char** save_ptr);
 
 /* function parse_background_operator
 receives the address of a pointer to current location in string being parsed

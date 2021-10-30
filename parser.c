@@ -318,21 +318,24 @@ save_ptr: pointer to pointer to stream under tokenization
 returns: save_ptr address
 */
 
-char** parse_variable_expansion(char** save_ptr)
+char* parse_variable_expansion(char** save_ptr)
 {
 
-    char* var_ptr;
+    char* return_ptr = calloc(strlen(*save_ptr) + 1, sizeof(char));
+    strcpy(return_ptr, *save_ptr);
+
+    char* var_ptr = NULL;
     char* new_str = NULL;
     char* token = NULL;
     int count = 0;
-    while ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
+    while ((token = strtok_r(NULL, " ", &return_ptr)) != NULL) {
         if ((var_ptr = strstr(token, "$$")) == NULL) {
 
             if (DEBUG_PARSER) {
                 printf("(parse_variable_expansion) no $$ found!\n");
             }
 
-            reattach_token(save_ptr, token, ' ');
+            reattach_token(&return_ptr, token, ' ');
             break;
         } else {
 
@@ -342,9 +345,9 @@ char** parse_variable_expansion(char** save_ptr)
 
             count++;
             // assign PID to $$
-            char* pid = malloc(sizeof(char) * 12); // allocate 11 chars for digits of PID
+            char* pid = calloc(12, sizeof(char)); // allocate 11 chars for digits of PID
             snprintf(pid, 12, "%d", getpid());
-            new_str = malloc(strlen(*save_ptr) + strlen(token) + strlen(pid) * count);
+            new_str = calloc(strlen(*save_ptr) + strlen(token) + strlen(pid) * count, sizeof(char));
             strcpy(new_str, token);
             strcpy((new_str + (var_ptr - token)), pid);
 
@@ -355,16 +358,16 @@ char** parse_variable_expansion(char** save_ptr)
             }
 
             strcat(new_str, " "); // delimiter
-            strcat(new_str, *save_ptr);
+            strcat(new_str, return_ptr);
 
             if (DEBUG_PARSER) {
                 printf("(parse_variable_expansion) new parse string: %s\n", new_str);
             }
 
-            save_ptr = &new_str;
+            return_ptr = new_str;
         }
     }
-    return save_ptr;
+    return return_ptr;
 }
 
 /* function parse_background_operator
@@ -451,7 +454,7 @@ struct command* parse(char* input)
     do {
 
         // parse variable expansion
-        save_ptr = *parse_variable_expansion(&save_ptr);
+        save_ptr = parse_variable_expansion(&save_ptr);
 
         // parse args
         save_ptr = *parse_args(&save_ptr, command);
