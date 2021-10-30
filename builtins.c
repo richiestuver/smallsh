@@ -70,6 +70,15 @@ status: pointer to initialized status struct
 */
 void builtin_status(struct status* status)
 {
+    if (DEBUG_BUILTINS) {
+
+        printf("(PARENT %d) code: %d \n", getpid(), status->code);
+        printf("(PARENT %d) pid: %d \n", getpid(), status->pid);
+        printf("(PARENT %d) name: %s \n", getpid(), status->name);
+        printf("(PARENT %d) exited: %s \n", getpid(), (status->exited) == 1 ? "true" : "false");
+        printf("(PARENT %d) signaled: %s \n", getpid(), (status->signaled) == 1 ? "true" : "false");
+        fflush(stdout);
+    }
 
     if (status->exited) {
         printf("exit value %d\n", status->code);
