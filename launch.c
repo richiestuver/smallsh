@@ -32,6 +32,7 @@ void launch(struct command* command, struct status* status)
     pid_t spawn_pid = INT_MIN;
     spawn_pid = fork();
 
+    // hold all SIGTSTP signals until just *after* termination of foreground processes
     sigset_t* block_SIGTSTP = NULL;
     block_SIGTSTP = block(SIGTSTP);
 
@@ -44,6 +45,7 @@ void launch(struct command* command, struct status* status)
 
     case 0: // child
 
+        // if command *must* execute in foreground, CTRL-C should terminate.
         if (!(exec_env->background_enabled && command->background)) {
             register_SIGINT(SIG_DFL);
         }
@@ -110,7 +112,11 @@ void launch(struct command* command, struct status* status)
     default: // parent
 
         if (!(exec_env->background_enabled && command->background)) {
+
+            // hold all SIGCHLD signals until AFTER the following waitpid has had
+            // a chance to retrieve the content for the exited foreground process.
             block_SIGCHLD = block(SIGCHLD);
+
             if (DEBUG_LAUNCH) {
                 printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
                 fflush(stdout);
