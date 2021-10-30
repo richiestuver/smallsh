@@ -18,7 +18,7 @@ for specific signals.
 */
 void register_signal(int signal, void (*handler)(int))
 {
-    struct sigaction catch = { 0 };
+    struct sigaction catch = { { 0 } };
     catch.sa_handler = handler;
     catch.sa_flags = 0;
 
@@ -61,7 +61,7 @@ void register_SIGTSTP(void (*handler)(int))
 
 sigset_t* block(int signal)
 {
-    sigset_t old_set = { 0 };
+    sigset_t old_set = { { 0 } };
     sigset_t* block_set = NULL;
     block_set = malloc(sizeof(sigset_t));
     sigemptyset(block_set);
@@ -73,7 +73,7 @@ sigset_t* block(int signal)
 
 sigset_t* unblock(sigset_t* block_set)
 {
-    sigset_t old_set = { 0 };
+    sigset_t old_set = { { 0 } };
     sigprocmask(SIG_UNBLOCK, block_set, &old_set);
     return block_set;
 }
