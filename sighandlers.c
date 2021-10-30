@@ -120,7 +120,7 @@ void cleanup_children(int signal)
             i++;
         }
 
-        write(STDOUT_FILENO, "\n", 2);
+        write(STDOUT_FILENO, "\n", 1);
     }
 
     char* output = calloc(128, sizeof(char));
@@ -140,7 +140,7 @@ void cleanup_children(int signal)
     case 0:
 
         if (DEBUG_SIG) {
-            write(STDOUT_FILENO, "no child processes have exited since last check\n", 49);
+            write(STDOUT_FILENO, "no child processes have exited since last check\n", 48);
         }
 
         break;
@@ -157,8 +157,10 @@ void cleanup_children(int signal)
         }
 
         sprintf(output, "background pid %d is done: ", pid);
-        write(STDOUT_FILENO, output, 128);
-        write(STDOUT_FILENO, exit_condition, 128);
+        write(STDOUT_FILENO, output, strlen(output));
+        fflush(stdout);
+        write(STDOUT_FILENO, exit_condition, strlen(exit_condition));
+        fflush(stdout);
         break;
     }
 }
