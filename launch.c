@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,14 @@ void launch(struct command* command, struct status* status)
     pid_t spawn_pid = INT_MIN;
     spawn_pid = fork();
 
+    // sigset_t old_set = { 0 };
+    // sigset_t block_set = { 0 };
+
+    // sigaddset(&block_set, SIGTSTP);
+    // sigprocmask(SIG_BLOCK, &block_set, &old_set);
+    sigset_t* block_SIGTSTP = NULL;
+    block_SIGTSTP = block(SIGTSTP);
+
     switch (spawn_pid) {
     case -1:
         printf("(main) fatal error: spawning process failed. exiting...\n");
@@ -38,9 +47,7 @@ void launch(struct command* command, struct status* status)
 
     case 0: // child
 
-        register_SIGTSTP(SIG_IGN);
-
-        if (!(command->background)) {
+        if (!(exec_env->background_enabled && command->background)) {
             register_SIGINT(SIG_DFL);
         }
 
@@ -113,6 +120,8 @@ void launch(struct command* command, struct status* status)
             }
 
             pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
+            unblock(block_SIGTSTP);
+            // sigprocmask(SIG_UNBLOCK, &block_set, &old_set);
 
             if (child_pid == -1) {
                 if (DEBUG_LAUNCH) {
@@ -161,6 +170,7 @@ void launch(struct command* command, struct status* status)
         } else {
             printf("background pid is %d\n", spawn_pid);
             fflush(stdout);
+            unblock(block_SIGTSTP);
         }
 
         break;

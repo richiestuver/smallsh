@@ -1,6 +1,7 @@
 #ifndef SIGHANDLERS_H
 #define SIGHANDLERS_H
 
+#include <signal.h>
 #define DEBUG_SIG false
 
 /* function catch_and_do_nothing
@@ -10,6 +11,9 @@ use instead of SIGINT as the signal for terminating processes will be different 
 up from a child process. presents a newline to stdout file. optional debug message to confirm working.
 */
 void catch_and_do_nothing(int signal);
+
+sigset_t* block(int signal);
+sigset_t* unblock(sigset_t* block_set);
 
 /* function register_signal
 is a helper function that takes a signal specifier and a callback that will
