@@ -74,22 +74,22 @@ struct keyword* check_contains(char* source, char** keywords)
     int i = -1;
     while (*(keywords + ++i) != NULL) {
 
-        printf("(check_contains) source: %s, keyword: %s \n", source, *(keywords + i));
-
         if ((strlen(source)) < strlen(*(keywords + i))) {
             continue;
         }
 
         char* loc;
         if ((loc = strstr(source, *(keywords + i))) == NULL) {
-            printf("(check_contains) found NOTHING.\n");
             continue;
         }
 
         keyword->ptr = &loc;
         keyword->symbol = *(keywords + i);
 
-        printf("(check_contains) found symbol: %s at %p\n", keyword->symbol, &keyword->ptr);
+        if (DEBUG_PARSER) {
+            printf("(check_contains) found symbol: %s at %p\n", keyword->symbol, &keyword->ptr);
+        }
+
         break;
     }
 

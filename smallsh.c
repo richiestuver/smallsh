@@ -9,6 +9,7 @@ Created: 10-20-21
 
 #include <fcntl.h>
 #include <limits.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +23,7 @@ Created: 10-20-21
 #include "input.h"
 #include "launch.h"
 #include "parser.h"
+#include "sighandlers.h"
 #include "smallsh.h"
 #include "status.h"
 
@@ -33,8 +35,11 @@ int main(void)
     struct command* command = NULL;
 
     stat = init_status();
+    register_SIGINT(SIG_IGN);
+    register_SIGCHLD(cleanup_children);
 
     while (true) {
+
         display_prompt();
 
         user_input = strip_comments(strip_newlines(get_user_input()));

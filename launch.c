@@ -10,6 +10,7 @@
 
 #include "command.h"
 #include "launch.h"
+#include "sighandlers.h"
 #include "status.h"
 
 /* function launch
@@ -33,18 +34,9 @@ void launch(struct command* command, struct status* status)
         break;
 
     case 0: // child
-        if (DEBUG_LAUNCH) {
-            printf("(CHILD %d) parent has PID %d\n", getpid(), getppid());
-            printf("(CHILD %d) executing command %s with args: ", getpid(), *(command->argv));
 
-            int i = 1;
-            while (*(command->argv + i) != NULL) {
-                printf("%s ", *(command->argv + i));
-                i += 1;
-            }
-            printf("\n");
-
-            fflush(stdout);
+        if (!(command->background)) {
+            register_SIGINT(SIG_DFL);
         }
 
         // redirect stdin
@@ -83,6 +75,19 @@ void launch(struct command* command, struct status* status)
             }
         }
 
+        if (DEBUG_LAUNCH) {
+            printf("(CHILD %d) executing command %s with args: ", getpid(), *(command->argv));
+
+            int i = 1;
+            while (*(command->argv + i) != NULL) {
+                printf("%s ", *(command->argv + i));
+                i += 1;
+            }
+            printf("\n");
+
+            fflush(stdout);
+        }
+
         // execvp will never return if no error
         if (execvp(*command->argv, command->argv) == -1) {
             printf("(CHILD %d) could not execute %s ", getpid(), *(command->argv));
@@ -95,47 +100,57 @@ void launch(struct command* command, struct status* status)
 
     default: // parent
 
-        if (DEBUG_LAUNCH) {
-            printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
+        if (!(command->background)) {
+            if (DEBUG_LAUNCH) {
+                printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
+                fflush(stdout);
+            }
+
+            pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
+
+            if (child_pid == -1) {
+                perror("(waitpqid)");
+                child_pid = spawn_pid;
+                fflush(stdout);
+            }
+
+            if WIFEXITED (child_status) {
+                if (DEBUG_LAUNCH) {
+                    printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
+                    fflush(stdout);
+                }
+
+                status = update_status(status, child_pid, *command->argv, WEXITSTATUS(child_status), EXIT);
+
+                if (DEBUG_LAUNCH) {
+                    printf("(PARENT %d) code: %d \n", getpid(), status->code);
+                    printf("(PARENT %d) pid: %d \n", getpid(), status->pid);
+                    printf("(PARENT %d) name: %s \n", getpid(), status->name);
+                    printf("(PARENT %d) exited: %s \n", getpid(), (status->exited) == 1 ? "true" : "false");
+                    printf("(PARENT %d) signaled: %s \n", getpid(), (status->signaled) == 1 ? "true" : "false");
+                    fflush(stdout);
+                }
+            }
+
+            if WIFSIGNALED (child_status) {
+
+                printf("terminated by signal %d\n", WTERMSIG(child_status));
+                fflush(stdout);
+
+                status = update_status(status, child_pid, *command->argv, WTERMSIG(child_status), SIGNAL);
+
+                if (DEBUG_LAUNCH) {
+                    printf("(PARENT %d) code: %d \n", getpid(), status->code);
+                    printf("(PARENT %d) pid: %d \n", getpid(), status->pid);
+                    printf("(PARENT %d) name: %s \n", getpid(), status->name);
+                    printf("(PARENT %d) exited: %s \n", getpid(), (status->exited) == 1 ? "true" : "false");
+                    printf("(PARENT %d) signaled: %s \n", getpid(), (status->signaled) == 1 ? "true" : "false");
+                    fflush(stdout);
+                }
+            }
+        } else {
+            printf("background pid is %d\n", spawn_pid);
             fflush(stdout);
-        }
-
-        pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
-
-        if WIFEXITED (child_status) {
-            if (DEBUG_LAUNCH) {
-                printf("(PARENT %d) child with PID %d exited with status %d\n", getpid(), child_pid, WEXITSTATUS(child_status));
-                fflush(stdout);
-            }
-
-            status = update_status(status, child_pid, *command->argv, WEXITSTATUS(child_status), EXIT);
-
-            if (DEBUG_LAUNCH) {
-                printf("(PARENT %d) code: %d \n", getpid(), status->code);
-                printf("(PARENT %d) pid: %d \n", getpid(), status->pid);
-                printf("(PARENT %d) name: %s \n", getpid(), status->name);
-                printf("(PARENT %d) exited: %s \n", getpid(), (status->exited) == 1 ? "true" : "false");
-                printf("(PARENT %d) signaled: %s \n", getpid(), (status->signaled) == 1 ? "true" : "false");
-                fflush(stdout);
-            }
-        }
-
-        if WIFSIGNALED (child_status) {
-            if (DEBUG_LAUNCH) {
-                printf("(PARENT %d) child with PID %d exited abnormally with signal %d\n", getpid(), child_pid, WTERMSIG(child_status));
-                fflush(stdout);
-            }
-
-            status = update_status(status, child_pid, *command->argv, WTERMSIG(child_status), SIGNAL);
-
-            if (DEBUG_LAUNCH) {
-                printf("(PARENT %d) code: %d \n", getpid(), status->code);
-                printf("(PARENT %d) pid: %d \n", getpid(), status->pid);
-                printf("(PARENT %d) name: %s \n", getpid(), status->name);
-                printf("(PARENT %d) exited: %s \n", getpid(), (status->exited) == 1 ? "true" : "false");
-                printf("(PARENT %d) signaled: %s \n", getpid(), (status->signaled) == 1 ? "true" : "false");
-                fflush(stdout);
-            }
         }
 
         break;
