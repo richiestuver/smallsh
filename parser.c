@@ -384,37 +384,46 @@ char** parse_background_operator(char** save_ptr, struct command* command)
 
     while ((token = strtok_r(NULL, " ", save_ptr)) != NULL) {
 
-        if (strcmp(token, "&") != 0) {
-
+        // no "&" found
+        if (strstr(token, "&") == NULL) {
             if (DEBUG_PARSER) {
                 printf("(parse_background_operator) no & found!\n");
             }
-
             reattach_token(save_ptr, token, ' ');
             break;
         }
 
-        if (strcmp(*save_ptr, "\0") != 0) {
-            printf("(parse_background_operator) syntax error: background operator must be final argument. dropping &\n");
-            break;
-        }
+        // "&" found, but is not last symbol or is not unique
+        else if ((strcmp(*save_ptr, "\0") != 0) || (strcmp(token, "&") != 0)) {
 
-        if (DEBUG_PARSER) {
-            printf("(parse_background_operator) detected background operator &\n");
-        }
+            if (command->argc >= 512) {
+                printf("(parse_args) size limit reached. stopping parse args to prevent buffer overflow...");
+                break;
+            }
 
-        command->background = true;
+            *(command->argv + command->argc) = token;
+            *(command->argv + command->argc + 1) = NULL; // delimits argument list
+            command->argc += 1;
 
-        if (command->f_stdin == NULL) {
-            command->f_stdin = DEV_NULL;
-        }
+        } else { // valid "&" operator!
 
-        if (command->f_stdout == NULL) {
-            command->f_stdout = DEV_NULL;
-        }
+            if (DEBUG_PARSER) {
+                printf("(parse_background_operator) detected background operator &\n");
+            }
 
-        if (command->f_stderr == NULL) {
-            command->f_stderr = DEV_NULL;
+            command->background = true;
+
+            if (command->f_stdin == NULL) {
+                command->f_stdin = DEV_NULL;
+            }
+
+            if (command->f_stdout == NULL) {
+                command->f_stdout = DEV_NULL;
+            }
+
+            if (command->f_stderr == NULL) {
+                command->f_stderr = DEV_NULL;
+            }
         }
     }
     return save_ptr;
