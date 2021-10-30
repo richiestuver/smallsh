@@ -12,4 +12,11 @@ Created: 10-27-21
 
 #define DEBUG false
 
+/* function main
+is the entrypoint and driver for the smallsh shell. sets initial program state for data structures
+that will be used across execution. registers expected signal behaviors for the shell
+when prompt is active. launches a "REPL" to collect user input, parse, and execute commands.
+*/
+int main(void);
+
 #endif
