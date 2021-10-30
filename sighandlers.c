@@ -10,8 +10,6 @@
 #include "launch.h"
 #include "sighandlers.h"
 
-#define DEBUG_SIG true
-
 /* function register_signal
 is a helper function that takes a signal specifier and a callback that will
 execute when the given signal is passed from the kernal to the process.
@@ -105,8 +103,8 @@ void cleanup_children(int signal)
         write(STDOUT_FILENO, "\n", 2);
     }
 
-    char* output = malloc(128);
-    char* exit_condition = malloc(128);
+    char* output = calloc(128, sizeof(char));
+    char* exit_condition = calloc(128, sizeof(char));
     int status;
     int pid = waitpid(-1, &status, WNOHANG);
 

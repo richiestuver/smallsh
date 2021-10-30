@@ -1,7 +1,7 @@
 #ifndef SIGHANDLERS_H
 #define SIGHANDLERS_H
 
-#define DEBUG_SIG true
+#define DEBUG_SIG false
 
 /* function catch_and_do_nothing
 is a signal handler that can be registered to catch and do nothing with a given signal.

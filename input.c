@@ -73,9 +73,11 @@ char* strip_newlines(char* source)
 
     char* token = NULL;
     char* save_ptr = NULL;
+    char* output = NULL;
+    char* tokenize = NULL;
 
-    char* tokenize = malloc(sizeof(char) * (strlen(source) + 1));
-    char* output = malloc(sizeof(char) * (strlen(source) + 1));
+    tokenize = calloc(sizeof(char) * (strlen(source) + 1), sizeof(char));
+    output = calloc(sizeof(char) * (strlen(source) + 1), sizeof(char));
     strcpy(tokenize, source);
 
     if ((token = strtok_r(tokenize, "\n", &save_ptr)) != NULL) {

@@ -106,6 +106,7 @@ void launch(struct command* command, struct status* status)
     default: // parent
 
         if (!(exec_env->background_enabled && command->background)) {
+
             if (DEBUG_LAUNCH) {
                 printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
                 fflush(stdout);
@@ -114,9 +115,13 @@ void launch(struct command* command, struct status* status)
             pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
 
             if (child_pid == -1) {
-                perror("(waitpqid)");
-                child_pid = spawn_pid;
-                fflush(stdout);
+                if (DEBUG_LAUNCH) {
+                    perror("(waitpqid)");
+                    // child_pid = spawn_pid;
+                    fflush(stdout);
+                }
+
+                break;
             }
 
             if WIFEXITED (child_status) {
