@@ -12,8 +12,6 @@
 #include "command.h"
 #include "status.h"
 
-#define DEBUG_BUILTINS true
-
 char* BUILTIN_COMMANDS[] = { "exit", "cd", "status", NULL };
 
 /* function exit
