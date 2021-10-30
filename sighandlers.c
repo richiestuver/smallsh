@@ -1,4 +1,3 @@
-#include <bits/types/sigset_t.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
