@@ -20,6 +20,7 @@ Created: 10-20-21
 
 #include "builtins.h"
 #include "command.h"
+#include "exec_env.h"
 #include "input.h"
 #include "launch.h"
 #include "parser.h"
@@ -33,10 +34,13 @@ int main(void)
     char* user_input;
     struct status* stat = NULL;
     struct command* command = NULL;
+    extern struct exec_env* exec_env;
 
     stat = init_status();
+    exec_env = init_exec_env();
     register_SIGINT(SIG_IGN);
     register_SIGCHLD(cleanup_children);
+    register_SIGTSTP(toggle_background);
 
     while (true) {
 
@@ -79,7 +83,7 @@ int main(void)
         }
 
         else {
-            launch(command, stat);
+            launch(command, stat, exec_env);
         }
     }
     return 0;

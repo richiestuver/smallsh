@@ -20,8 +20,9 @@ and values for stdin, stdout, and stderr. If background is true, command will be
 command: must be a fully filled command struct.
 status: struct to update the command execution status
 */
-void launch(struct command* command, struct status* status)
+void launch(struct command* command, struct status* status, struct exec_env* exec_env)
 {
+
     int child_status;
     pid_t spawn_pid = INT_MIN;
     spawn_pid = fork();
@@ -34,6 +35,8 @@ void launch(struct command* command, struct status* status)
         break;
 
     case 0: // child
+
+        register_SIGTSTP(SIG_IGN);
 
         if (!(command->background)) {
             register_SIGINT(SIG_DFL);

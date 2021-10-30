@@ -7,4 +7,9 @@ Created: 10-27-21
 
 */
 
+#ifndef SMALLSH_H
+#define SMALLSH_H
+
 #define DEBUG true
+
+#endif

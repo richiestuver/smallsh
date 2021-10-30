@@ -6,7 +6,60 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "exec_env.h"
+#include "launch.h"
+#include "sighandlers.h"
+
 #define DEBUG_SIG true
+
+/* function register_signal
+is a helper function that takes a signal specifier and a callback that will
+execute when the given signal is passed from the kernal to the process.
+Handles struct definition and assignment as a convenience for wrapper functions
+for specific signals.
+*/
+void register_signal(int signal, void (*handler)(int))
+{
+    struct sigaction catch = { 0 };
+    catch.sa_handler = handler;
+    catch.sa_flags = 0;
+
+    sigfillset(&catch.sa_mask);
+    sigaction(signal, &catch, NULL);
+}
+
+/* function register_SIGINT
+defines a new sigaction struct and registers the provided handler to
+catch SIGINT. Alternatively pass SIG_IGN or SIG_DFL to either ignore or
+reset to default behavior. All other signals blocked while handler
+executes and no other flags are set.
+*/
+void register_SIGINT(void (*handler)(int))
+{
+    register_signal(SIGINT, handler);
+}
+
+/* function register_SIGCHLD
+defines a new sigaction struct and registers the provided handler to
+catch SIGCHLD. Alternatively pass SIG_IGN or SIG_DFL to either ignore or
+reset to default behavior. All other signals blocked while handler executes and no other
+flags are set.
+*/
+void register_SIGCHLD(void (*handler)(int))
+{
+    register_signal(SIGCHLD, handler);
+}
+
+/* function register_SIGTSTP
+defines a new sigaction struct and registers the provided handler to catch SIGTSTP.
+Alternatively pass SIG_IGN or SIG_DFL to either ignore or reset to default behavior.
+All other signals blocked while handler executes and no other
+flags are set.
+*/
+void register_SIGTSTP(void (*handler)(int))
+{
+    register_signal(SIGTSTP, handler);
+}
 
 /* function catch_and_do_nothing
 is a signal handler that can be registered to catch and do nothing with a given signal.
@@ -30,6 +83,11 @@ void catch_and_do_nothing(int signal)
     write(STDOUT_FILENO, "\n", 2);
 }
 
+/* function cleanup_children
+takes a signal specifier and reports out signal status information
+upon termination of child processes. additional diagnostic information
+is reported if DEBUG_SIG flag is set.
+*/
 void cleanup_children(int signal)
 {
 
@@ -62,7 +120,11 @@ void cleanup_children(int signal)
         break;
 
     case 0:
-        write(STDOUT_FILENO, "no child processes have exited since last check\n", 49);
+
+        if (DEBUG_SIG) {
+            write(STDOUT_FILENO, "no child processes have exited since last check\n", 49);
+        }
+
         break;
 
     // report out background process termination
@@ -83,32 +145,31 @@ void cleanup_children(int signal)
     }
 }
 
-void register_signal(int signal, void (*handler)(int))
-{
-    struct sigaction catch = { 0 };
-    catch.sa_handler = handler;
-    catch.sa_flags = 0;
+// void toggle_background_on_SIGTSTP(struct exec_env* exec_env)
+// {
+//     struct sigaction catch = { 0 };
+//     catch.sa_handler = toggle_background;
+//     catch.sa_flags = 0;
 
-    sigfillset(&catch.sa_mask);
-    sigaction(signal, &catch, NULL);
-}
+//     sigfillset(&catch.sa_mask);
+//     sigaction(signal, &catch, NULL);
+// }
 
-/* function register_SIGINT
-defines a new sigaction struct and registers the provided handler to
-catch SIGINT. All other signals blocked while handler executes and no other
-flags are set.
-*/
-void register_SIGINT(void (*handler)(int))
+void toggle_background(int signal)
 {
-    register_signal(SIGINT, handler);
-}
+    extern struct exec_env* exec_env;
+    exec_env->background_enabled = !(exec_env->background_enabled);
 
-/* function register_SIGCHLD
-defines a new sigaction struct and registers the provided handler to
-catch SIGCHLD. All other signals blocked while handler executes and no other
-flags are set.
-*/
-void register_SIGCHLD(void (*handler)(int))
-{
-    register_signal(SIGCHLD, handler);
+    switch ((int)exec_env->background_enabled) {
+    case true:
+        write(STDOUT_FILENO, "\nExiting foreground-only mode\n", 30);
+        break;
+
+    case false:
+        write(STDOUT_FILENO, "\nEntering foreground-only mode (& is now ignored)\n", 50);
+        break;
+
+    default:
+        break;
+    }
 }

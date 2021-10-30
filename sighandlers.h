@@ -11,7 +11,13 @@ up from a child process. presents a newline to stdout file. optional debug messa
 */
 void catch_and_do_nothing(int signal);
 
-void register_signal(int signal);
+/* function register_signal
+is a helper function that takes a signal specifier and a callback that will
+execute when the given signal is passed from the kernal to the process.
+Handles struct definition and assignment as a convenience for wrapper functions
+for specific signals.
+*/
+void register_signal(int signal, void (*handler)(int));
 
 /* function register_SIGINT
 defines a new sigaction struct and registers the provided handler to
@@ -27,5 +33,21 @@ flags are set.
 */
 void register_SIGCHLD(void (*handler)(int));
 
+/* function register_SIGTSTP
+defines a new sigaction struct and registers the provided handler to catch SIGTSTP.
+Alternatively pass SIG_IGN or SIG_DFL to either ignore or reset to default behavior.
+All other signals blocked while handler executes and no other
+flags are set.
+*/
+void register_SIGTSTP(void (*handler)(int));
+
+/* function cleanup_children
+takes a signal specifier and reports out signal status information
+upon termination of child processes. additional diagnostic information
+is reported if DEBUG_SIG flag is set.
+*/
 void cleanup_children(int signal);
+
+void toggle_background(int signal);
+
 #endif
