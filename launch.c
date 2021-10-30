@@ -30,11 +30,6 @@ void launch(struct command* command, struct status* status)
     pid_t spawn_pid = INT_MIN;
     spawn_pid = fork();
 
-    // sigset_t old_set = { 0 };
-    // sigset_t block_set = { 0 };
-
-    // sigaddset(&block_set, SIGTSTP);
-    // sigprocmask(SIG_BLOCK, &block_set, &old_set);
     sigset_t* block_SIGTSTP = NULL;
     block_SIGTSTP = block(SIGTSTP);
 
@@ -121,12 +116,10 @@ void launch(struct command* command, struct status* status)
 
             pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
             unblock(block_SIGTSTP);
-            // sigprocmask(SIG_UNBLOCK, &block_set, &old_set);
 
             if (child_pid == -1) {
                 if (DEBUG_LAUNCH) {
                     perror("(waitpqid)");
-                    // child_pid = spawn_pid;
                     fflush(stdout);
                 }
 
