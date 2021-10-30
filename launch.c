@@ -117,13 +117,17 @@ void launch(struct command* command, struct status* status)
             pid_t child_pid = waitpid(spawn_pid, &child_status, 0);
             unblock(block_SIGTSTP);
 
+            if (DEBUG_LAUNCH) {
+                printf("(PARENT %d) waitpid terminated with %d\n", getpid(), child_pid);
+                fflush(stdout);
+            }
+
             if (child_pid == -1) {
                 if (DEBUG_LAUNCH) {
-                    perror("(waitpqid)");
+                    perror("(waitpid)");
                     fflush(stdout);
                 }
-
-                break;
+                child_pid = spawn_pid;
             }
 
             if WIFEXITED (child_status) {
