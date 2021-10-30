@@ -4,7 +4,7 @@
 #include "command.h"
 #include "status.h"
 
-#define DEBUG_BUILTINS true
+#define DEBUG_BUILTINS false
 
 /* function exit
 exits the shell and terminates all other processes or jobs that the shell has started.
