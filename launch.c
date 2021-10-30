@@ -20,8 +20,10 @@ and values for stdin, stdout, and stderr. If background is true, command will be
 command: must be a fully filled command struct.
 status: struct to update the command execution status
 */
-void launch(struct command* command, struct status* status, struct exec_env* exec_env)
+void launch(struct command* command, struct status* status)
 {
+
+    extern struct exec_env* exec_env;
 
     int child_status;
     pid_t spawn_pid = INT_MIN;
@@ -103,7 +105,7 @@ void launch(struct command* command, struct status* status, struct exec_env* exe
 
     default: // parent
 
-        if (!(command->background)) {
+        if (!(exec_env->background_enabled && command->background)) {
             if (DEBUG_LAUNCH) {
                 printf("(PARENT %d) waiting for child with PID %d to terminate...\n", getpid(), spawn_pid);
                 fflush(stdout);

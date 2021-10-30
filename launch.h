@@ -7,5 +7,5 @@
 
 #define DEBUG_LAUNCH true
 
-void launch(struct command* command, struct status* status, struct exec_env* exec_env);
+void launch(struct command* command, struct status* status);
 #endif

@@ -83,7 +83,7 @@ int main(void)
         }
 
         else {
-            launch(command, stat, exec_env);
+            launch(command, stat);
         }
     }
     return 0;
