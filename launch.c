@@ -127,7 +127,7 @@ void launch(struct command* command, struct status* status)
                     perror("(waitpid)");
                     fflush(stdout);
                 }
-                child_pid = spawn_pid;
+                break;
             }
 
             if WIFEXITED (child_status) {
