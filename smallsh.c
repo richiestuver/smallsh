@@ -76,12 +76,14 @@ int main(void)
             printf("        stdin: %s\n", (command->f_stdin));
             printf("        stdout: %s\n", (command->f_stdout));
             printf("        stderr: %s\n", (command->f_stderr));
+            fflush(stdout);
         }
 
         char* cmd;
         if ((cmd = check_builtins(*(command->argv))) != NULL) {
             if (DEBUG) {
                 printf("((main %d) found builtin cmd %s\n", getpid(), cmd);
+                fflush(stdout);
             }
 
             launch_builtin(command, stat);
