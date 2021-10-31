@@ -59,6 +59,13 @@ void register_SIGTSTP(void (*handler)(int))
     register_signal(SIGTSTP, handler);
 }
 
+/* function block
+registers a given signal as the single member of a block set
+and calls sigprocmask for the purposes of delaying delivery of the given signal.
+this is a convenience wrapper for handling the signal blocking setup.
+
+returns: the sigset used for the blocking mask. use the return value to later unblock.
+*/
 sigset_t* block(int signal)
 {
     sigset_t old_set = { { 0 } };
@@ -71,6 +78,11 @@ sigset_t* block(int signal)
     return block_set;
 }
 
+/* function unblock
+takes a signal set as a parameter and attempts to unblock these signals.
+per sigprocmask description, there is no issue attempting to unblock signals
+which were already unblocked. passes through parameter unchanged as return value.
+*/
 sigset_t* unblock(sigset_t* block_set)
 {
     sigset_t old_set = { { 0 } };
