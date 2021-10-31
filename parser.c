@@ -154,8 +154,8 @@ char* check_redirects(char* token)
 {
     struct keyword* keyword = check_contains(token, REDIRECTS);
     return keyword->symbol;
-    // return check_from_start(token, REDIRECTS);
 }
+
 /* function reattach_token
 "undo" for a strtok call to reattach a token that was carved out of a string.
 does this by replacing the null terminator with the original delimiter char
@@ -213,7 +213,6 @@ char** parse_args(char** save_ptr, struct command* command)
             printf("(parse_args) found token: %s\n", token);
         }
 
-        // if (check_from_start(token, RESERVED_WORDS) != NULL) {
         if (check_reserved_words(token) != NULL) {
             save_ptr = reattach_token(save_ptr, token, ' ');
             break;
@@ -317,7 +316,6 @@ a variable is encountered.
 save_ptr: pointer to pointer to stream under tokenization
 returns: save_ptr address
 */
-
 char* parse_variable_expansion(char** save_ptr)
 {
 
@@ -447,19 +445,14 @@ struct command* parse(char* input)
         exit(1);
     };
 
-    // char* token = NULL;
     char* save_ptr = NULL;
 
     char* tokenize = malloc(sizeof(char) * (strlen(input) + 1));
     strcpy(tokenize, input);
 
-    // // parse command -- WILL call strtok_r. this should be for the FIRST time
-    // save_ptr = *parse_command(tokenize, &save_ptr, command);
-
     char* token = strtok_r(tokenize, " ", &save_ptr);
     reattach_token(&save_ptr, token, ' ');
 
-    // TODO: protect against infinite loop, make sure all reserved words are handled.
     do {
 
         // parse variable expansion

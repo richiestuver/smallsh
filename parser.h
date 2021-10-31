@@ -93,6 +93,16 @@ to location in string containing the symbol
 */
 struct keyword* check_contains(char* source, char** keywords);
 
+/* function parse_variable_expansion
+receives the address of a pointer to current location in string being parsed
+returns a new pointer to updated location after all variables $$ have been parsed
+and replaced with process ID of this shell. process ID is reattached to input stream
+to be reinterpreted as an argument. parsing exits if a reserved keyword that is not a
+a variable is encountered.
+
+save_ptr: pointer to pointer to stream under tokenization
+returns: save_ptr address
+*/
 char* parse_variable_expansion(char** save_ptr);
 
 /* function parse_background_operator
